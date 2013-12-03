@@ -4,12 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 
-import regulatorsocket.Packet;
 import regulatorsocket.Util;
 
-import util.IO;
+import util.IOMonitor;
 
 import gnu.io.CommPort;
 import gnu.io.CommPortIdentifier;
@@ -25,18 +23,19 @@ import gnu.io.SerialPort;
 // $ java -Djava.library.path=/usr/lib/jni -cp /usr/share/java/RXTXcomm.jar:. TwoWaySerialComm "/dev/tty/USB0" baudRate bufferSize # (baudRate and bufferSize musts be ints)
 public class TwoWaySerialComm {
 
-	IO signal;
+	IOMonitor monitor;
 	private String serialPort;
 	private int baudRate;
 	private int bufferSize;
 
-	public TwoWaySerialComm(String[] args, IO angle, IO pos, IO signal, String serialPort, int baudRate, int bufferSize) {
-		this.signal = signal;
+	public TwoWaySerialComm(String[] args, IOMonitor angle, IOMonitor pos,
+			IOMonitor signal, String serialPort, int baudRate, int bufferSize) {
+		this.monitor = signal;
 		// Defaults
-		//String serialPort = "/dev/ttyUSB0";
+		// String serialPort = "/dev/ttyUSB0";
 		// int baudRate = 38400;
-		//int baudRate = 57600;
-		//int bufferSize = 1024; // TODO: Find an appropriate buffer size
+		// int baudRate = 57600;
+		// int bufferSize = 1024; // TODO: Find an appropriate buffer size
 
 		for (int i = 0; i < args.length; i++) {
 			switch (i) {
@@ -88,7 +87,8 @@ public class TwoWaySerialComm {
 	public void start() {
 		try {
 			System.out.println("\n\n[CONNECT]: serial=" + serialPort
-					+ ", baudRate=" + baudRate + ", busignalfferSize=" + bufferSize);
+					+ ", baudRate=" + baudRate + ", busignalfferSize="
+					+ bufferSize);
 			this.connect(serialPort, baudRate, bufferSize);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -120,8 +120,8 @@ public class TwoWaySerialComm {
 
 				System.out.println("[START] Serial reader");
 				System.out.println("[START] Serial writer");
-				(new Thread(new SerialReader(in, bufferSize))).start();
-				(new Thread(new SerialWriter(out, signal))).start();
+				(new Thread(new SerialReader(in, bufferSize, this))).start();
+				(new Thread(new SerialWriter(out, monitor))).start();
 
 			} else {
 				System.out.println("[ERROR] Only serial ports are implemented");
@@ -131,40 +131,43 @@ public class TwoWaySerialComm {
 
 	public static class SerialReader implements Runnable {
 
+		private static final byte SEND_DATA = (byte) 'S';
+
+		private static final int IDENTIFIER = 0;
+		private static final int CHANNEL = 1;
+		private static final int DATA = 2;
+
 		InputStream in;
 		int bufferSize;
+		TwoWaySerialComm comm;
+		int channel;
+		short data;
 
-		public SerialReader(InputStream in, int bufferSize) {
+		public SerialReader(InputStream in, int bufferSize,
+				TwoWaySerialComm comm) {
 			this.in = in;
 			this.bufferSize = bufferSize;
+			this.comm = comm;
 		}
 
 		public void run() {
-			// byte[] buffer = new byte[this.bufferSize];
-			byte[] buffer = new byte[16];
-			int len = -1;
+			byte[] buffer = new byte[4];
 			try {
-				while ((len = this.in.read(buffer)) > -1) {
-					// TODO: Implement
-					/*
-					 * TODO: Outputs everything that is printed to terminal i.e
-					 * if you write "HEJ" and press ENTER output will be:
-					 * [OUTPUT]='H' [OUTPUT]='EJ '
-					 */
-					// ByteBuffer bb = ByteBuffer.wrap(buffer);
-					
-					System.out.print("[OUTPUT]=");
-					for (int i = 0; i < buffer.length; i++) {
-						// System.out.print(bb.getChar());
-						System.out.println(Integer
-								.toBinaryString((int) buffer[i]));
+				while (this.in.read(buffer) > -1) {
+					ByteBuffer bb = ByteBuffer.wrap(buffer);
+
+					if (bb.get(IDENTIFIER) == SEND_DATA) {
+						channel = bb.get(CHANNEL);
+						data = bb.getShort(DATA);
+
+						System.out.println("[RECIVIE][ :" + channel + "]: "
+								+ data);
 					}
-					System.out.println();
-					
-					// System.out.println("[OUTPUT]='" + new String(buffer, 0,
-					// len) + "'");
+					Thread.sleep(50);
 				}
 			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
@@ -172,49 +175,63 @@ public class TwoWaySerialComm {
 
 	public static class SerialWriter implements Runnable {
 
-		OutputStream out;
-		IO signal;
+		private static final byte READ_REQUEST = (byte) 'R';
+		private static final byte WRITE_DATA = (byte) 'W';
 
-		public SerialWriter(OutputStream out, IO signal) {
+		private static final byte CHANEL_0 = (byte) 0;
+		private static final byte CHANEL_1 = (byte) 1;
+
+		private static final byte PADDING_DATA = (byte) 0xff;
+
+		private static final int IDENTIFIER = 0;
+		private static final int CHANNEL = 1;
+		private static final int PADDING = 2;
+		private static final int LOW = 1;
+		private static final int HIGH = 2;
+
+		OutputStream out;
+		IOMonitor monitor;
+		ByteBuffer read, buffer;
+
+		public SerialWriter(OutputStream out, IOMonitor monitor) {
 			this.out = out;
-			this.signal = signal;
+			this.monitor = monitor;
+			this.buffer = ByteBuffer.allocate(3);
 		}
 
 		public void run() {
 			try {
-				long i = 0;
 				while (!Thread.interrupted()) {
-					ByteBuffer bb = ByteBuffer.allocate(2);
-					bb.putShort(signal.getShortValue());
-					
-					/*
-					  System.out.print("[DEBUG]: (");
-					  System.out.print(Integer.toBinaryString((int)
-					  bb.array()[0])); System.out.print(", ");
-					  System.out.print(Integer.toBinaryString((int)
-					  bb.array()[1])); System.out.println(")");
-					 */
-					
-					this.out.write(bb.array());
+
+					switch (monitor.getId()) {
+					case (IOMonitor.ANGLE):
+						buffer.put(IDENTIFIER, READ_REQUEST);
+						buffer.put(CHANNEL, CHANEL_0);
+						buffer.put(PADDING, PADDING_DATA);
+						break;
+					case (IOMonitor.POSITION):
+						buffer.put(IDENTIFIER, READ_REQUEST);
+						buffer.put(CHANNEL, CHANEL_1);
+						buffer.put(PADDING, PADDING_DATA);
+						break;
+					case (IOMonitor.Y):
+						buffer.put(IDENTIFIER, WRITE_DATA);
+						buffer.put(LOW, monitor.getByteLow());
+						buffer.put(HIGH, monitor.getByteHigh());
+						break;
+					}
+					out.write(buffer.array());
 					// Sleep
 					Thread.sleep(10);
 				}
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			Util.print("Thread stopped!");
 
-			try {
-				int c = 0;
-				while ((c = System.in.read()) > -1) {
-					// TODO: Implement
-					this.out.write(c);
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		}
 	}
 }
