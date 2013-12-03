@@ -2,7 +2,7 @@ package regulatorsocket;
 
 import java.net.InetAddress;
 
-public abstract class Glue {
+public abstract class Monitor {
 
 	protected double transferData;
 	protected double localData;
@@ -10,6 +10,7 @@ public abstract class Glue {
 	protected int port;
 	protected long ping;
 	protected long lastPacket;
+    protected long lastPingPacket;
 	protected Packet returningPingPacket = null;
 
 	public synchronized double getData() {
@@ -24,7 +25,7 @@ public abstract class Glue {
 		if (address == null || port < 0)
 			return null;
 		long time = System.currentTimeMillis();
-//		Util.print("Sending  (Glue): " + time + " " + transferData);
+//		Util.print("Sending  (Monitor): " + time + " " + transferData);
 		return new Packet(address, port, time, transferData);
 	}
 
@@ -32,7 +33,7 @@ public abstract class Glue {
 		if (address == null || port < 0)
 			return null;
 		long time = System.currentTimeMillis();
-		Util.print("Sending  (Glue): " + time + " Ping");
+		Util.print("Sending  (Monitor): " + time + " Ping");
 		return new Packet(address, port, time, time);
 	}
 
@@ -40,7 +41,7 @@ public abstract class Glue {
 		Packet packet = returningPingPacket;
 		returningPingPacket = null;
 		if (packet != null) {
-			Util.print("Sending  (Glue): " + System.currentTimeMillis()
+			Util.print("Sending  (Monitor): " + System.currentTimeMillis()
 					+ " Returning ping");
 		}
 		return packet;
@@ -49,22 +50,29 @@ public abstract class Glue {
 	public synchronized void setPacket(Packet packet) {
 		long time = System.currentTimeMillis();
 		if (packet.isPing()) {
-			if (packet.isReturningPing()) {
-				ping = time - packet.getPing();
-				Util.print("Received (Glue): " + time + " Ping [" + ping + " ms]");
-			} else {
-				packet.setReturningPing();
-				returningPingPacket = packet;
-				Util.print("Received (Glue): " + time + " Ping packet ["
-						+ packet.isReturningPing() + "]");
-			}
+            if (packet.getTimestamp() > lastPingPacket) {
+                if (packet.isReturningPing()) {
+                    ping = time - packet.getPing();
+                    Util.print("Received (Monitor): " + time + " Ping [" + ping + " ms]");
+                } else {
+                    packet.setReturningPing();
+                    returningPingPacket = packet;
+                    Util.print("Received (Monitor): " + time + " Ping packet ["
+                            + packet.isReturningPing() + "]");
+                }
+            } else {
+                Util.print("Received (Monitor): " + time + " discarded old ping packet");
+            }
+
 		} else {
+
 			if (packet.getTimestamp() > lastPacket) {
-				localData = packet.getSignal();
-				//Util.print("Received (Glue): " + time + " " + localData);
+				localData = packet.getPayload();
+				//Util.print("Received (Monitor): " + time + " " + localData);
 			} else {
-				Util.print("Received (Glue): " + time + " discarded old data");
+				Util.print("Received (Monitor): " + time + " discarded old data");
 			}
+
 		}
 	}
 

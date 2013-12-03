@@ -120,8 +120,9 @@ public class TwoWaySerialComm {
 
 				System.out.println("[START] Serial reader");
 				System.out.println("[START] Serial writer");
-				(new Thread(new SerialReader(in, bufferSize, this))).start();
-				(new Thread(new SerialWriter(out, monitor))).start();
+				(new Thread(new SerialReader(in, out, bufferSize, this)))
+						.start();
+				// (new Thread(new SerialWriter(out, monitor))).start();
 
 			} else {
 				System.out.println("[ERROR] Only serial ports are implemented");
@@ -137,38 +138,84 @@ public class TwoWaySerialComm {
 		private static final int CHANNEL = 1;
 		private static final int DATA = 2;
 
+		private static final byte READ_REQUEST = (byte) 'R';
+		private static final byte WRITE_DATA = (byte) 'W';
+
+		private static final byte CHANEL_0 = (byte) 0;
+		private static final byte CHANEL_1 = (byte) 1;
+
+		private static final byte PADDING_DATA = (byte) 0xff;
+
+		private static final int PADDING = 2;
+		private static final int LOW = 1;
+		private static final int HIGH = 2;
+
 		InputStream in;
 		int bufferSize;
 		TwoWaySerialComm comm;
 		int channel;
 		short data;
+		OutputStream out;
+		IOMonitor monitor;
+		ByteBuffer sendBuffer;
+		int count = 0;
 
-		public SerialReader(InputStream in, int bufferSize,
+		public SerialReader(InputStream in, OutputStream out, int bufferSize,
 				TwoWaySerialComm comm) {
 			this.in = in;
+			this.out = out;
 			this.bufferSize = bufferSize;
 			this.comm = comm;
+			this.sendBuffer = ByteBuffer.allocate(3);
 		}
 
 		public void run() {
-			byte[] buffer = new byte[4];
+			byte[] receiveBuffer = new byte[4];
 			try {
-				while (this.in.read(buffer) > -1) {
-					ByteBuffer bb = ByteBuffer.wrap(buffer);
+
+				while (!Thread.interrupted()) {
+					System.out.println("Counter: " + count);
+					switch (count) {
+					case (0):
+						sendBuffer.put(IDENTIFIER, READ_REQUEST);
+						sendBuffer.put(CHANNEL, CHANEL_0);
+						sendBuffer.put(PADDING, PADDING_DATA);
+						break;
+					case (1):
+						sendBuffer.put(IDENTIFIER, READ_REQUEST);
+						sendBuffer.put(CHANNEL, CHANEL_1);
+						sendBuffer.put(PADDING, PADDING_DATA);
+						break;
+					case (2):
+						sendBuffer.put(IDENTIFIER, WRITE_DATA);
+						sendBuffer.put(LOW, IOMonitor.getIO(3).getByteLow());
+						sendBuffer.put(HIGH, IOMonitor.getIO(3).getByteHigh());
+						break;
+					}
+					count = (count + 1) % 3;
+					out.write(sendBuffer.array());
+					in.read(receiveBuffer);
+
+					ByteBuffer bb = ByteBuffer.wrap(receiveBuffer);
 
 					if (bb.get(IDENTIFIER) == SEND_DATA) {
+						System.out.println("Identifier: " + bb.get(IDENTIFIER));
+						System.out.println("Counter: " + count);
+						System.out.println("Channel: " + bb.get(CHANNEL));
 						channel = bb.get(CHANNEL);
 						data = bb.getShort(DATA);
 
-						System.out.println("[RECIVIE][ :" + channel + "]: "
+						System.out.println("[RECEIVE][" + channel + "]: "
 								+ data);
 					}
-					Thread.sleep(50);
+					
+					bb.clear();
+					// Thread.sleep(50);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+				// } catch (InterruptedException e) {
+				// e.printStackTrace();
 			}
 		}
 	}
@@ -191,7 +238,7 @@ public class TwoWaySerialComm {
 
 		OutputStream out;
 		IOMonitor monitor;
-		ByteBuffer read, buffer;
+		ByteBuffer buffer;
 
 		public SerialWriter(OutputStream out, IOMonitor monitor) {
 			this.out = out;
