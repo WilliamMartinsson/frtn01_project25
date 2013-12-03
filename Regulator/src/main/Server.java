@@ -1,9 +1,13 @@
 package main;
 
-import regulatorsocket.RegulatorSocket;
-
 public class Server {
-    public static void main(String[] args) {
-        RegulatorSocket.main(new String[] {"-server", "12345"});
-    }
+
+	public Server(){
+
+	}
+
+	public static void main(String[] args) {
+		new Server();
+	}
+
 }

@@ -1,7 +1,7 @@
 package regulator;
 
 import se.lth.control.realtime.Semaphore;
-import util.IO;
+import util.IOMonitor;
 
 public class Regul extends Thread {
 	public static final int OFF = 0;
@@ -11,9 +11,9 @@ public class Regul extends Thread {
 	private PI inner = new PI("PI");
 	private PID outer = new PID("PID");
 
-	private IO analogInAngle;
-	private IO analogInPosition;
-	private IO analogOut;
+	private IOMonitor analogInAngle;
+	private IOMonitor analogInPosition;
+	private IOMonitor analogOut;
 
 	private ReferenceGeneratorProxy referenceGenerator;
 	// private OpComProxy opcom;
@@ -39,7 +39,7 @@ public class Regul extends Thread {
 		}
 	}
 
-	public Regul(int pri, IO angle, IO pos, IO ref) {
+	public Regul(int pri, IOMonitor angle, IOMonitor pos, IOMonitor ref) {
 		priority = pri;
 		mutex = new Semaphore(1);
 		analogInAngle = angle;
@@ -117,10 +117,12 @@ public class Regul extends Thread {
 	}
 
 	public void run() {
-		short aaaaaaaaaaaaaaaaaaa = -20;
+		short aaaaaaaaaaaaaaaaaaa = -10;
 		long duration;
 		long t = System.currentTimeMillis();
 		starttime = t;
+		double angle = 0;
+		double position = 0;
 
 		//this.setPriority(priority);
 		mutex.take();
@@ -131,10 +133,12 @@ public class Regul extends Thread {
 				outer.reset();
 				this.sendDataToOpCom(0, 0, 0);
 				try {
-					System.out.println("Switching: "+aaaaaaaaaaaaaaaaaaa);
-					analogOut.setValue(aaaaaaaaaaaaaaaaaaa);
-					aaaaaaaaaaaaaaaaaaa *= -1;
+					//System.out.println("Switching: "+aaaaaaaaaaaaaaaaaaa);
+					//analogOut.setValue(aaaaaaaaaaaaaaaaaaa);
+					//aaaaaaaaaaaaaaaaaaa *= -1;
 					Thread.sleep(5000);
+					angle = analogInAngle.getValue();
+					position = analogInPosition.getValue();
 				} catch (Exception e) {
 					System.out.println("Failed to write to analog output");
 				}
@@ -160,8 +164,7 @@ public class Regul extends Thread {
 				break;
 			}
 			case BALL: {
-				double angle = 0;
-				double position = 0;
+
 				try {
 					angle = analogInAngle.getValue();
 					position = analogInPosition.getValue();
