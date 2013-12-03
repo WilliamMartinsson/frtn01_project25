@@ -22,10 +22,10 @@ public class WebMonitor {
      * Creates a WebMonitor with a specified URL.
      * @param url
      */
-	public WebMonitor(String url) {
-		this.url = url;
+    public WebMonitor(String url) {
+        this.url = "http://" + url;
         System.setProperty("http.keepAlive", "false"); // Don't keep connections alive
-	}
+    }
 
     /**
      * Sends a POST request to defined url.
@@ -84,6 +84,7 @@ public class WebMonitor {
         ByteBuffer buffer = ByteBuffer.wrap(b);
         return new String(buffer.array());
     }
+
 
     private static HashMap<String, Double> toHashConfig(String jsonString) {
         HashMap<String, Double> config = new HashMap<String, Double>();
