@@ -8,13 +8,12 @@ import java.util.LinkedList;
 
 public class RegulatorSocket {
 
-	private int sendPeriod = 100;
-	private int receivePeriod = 100;
+	private int sendPeriod = 200;
 	private DatagramSocket datagramSocket;
-	private Glue glue;
+	private Monitor monitor;
 
 	public RegulatorSocket(int port, String host) throws IOException {
-		glue = new Client(InetAddress.getByName(host), port);
+		monitor = new Client(InetAddress.getByName(host), port);
 		Util.print("Starting client");
 		Util.print("Connecting to: " + host + ":" + port);
 
@@ -22,7 +21,7 @@ public class RegulatorSocket {
 	}
 
 	public RegulatorSocket(int port) throws IOException {
-		glue = new Server();
+		monitor = new Server();
 		Util.print("Starting server");
 		Util.print("Open for connections to port " + port);
 
@@ -32,7 +31,7 @@ public class RegulatorSocket {
 	// DUBUG
 	public void push() {
 		while (true) {
-			glue.setData(Math.sin(System.currentTimeMillis()));
+			monitor.setData(Math.sin(System.currentTimeMillis()));
 		}
 	}
 
@@ -51,16 +50,12 @@ public class RegulatorSocket {
 		r.start();
 	}
 
-	public Glue getGlue() {
-		return glue;
+	public Monitor getMonitor() {
+		return monitor;
 	}
 
 	public void setSendPeriod(int period) {
 		this.sendPeriod = period;
-	}
-
-	public void setReceivePeriod(int period) {
-		this.receivePeriod = period;
 	}
 
 	/*
@@ -103,7 +98,7 @@ public class RegulatorSocket {
 						RegulatorSocket server = new RegulatorSocket(port);
 						server.open();
 					} catch (Exception e) {
-						System.out.println("Pallar inte just nu....");
+						System.out.println("Exception caught when trying to setup regulator server on port: " + port);
 						e.printStackTrace();
 					}
 				} catch (NumberFormatException e) {
@@ -125,7 +120,7 @@ public class RegulatorSocket {
 						client.open();
 						client.push();
 					} catch (Exception e) {
-						System.out.println("Pallar inte just nu....");
+                        System.out.println("Exception caught when trying to setup regulator client connection to server [" + param.getLast() + ":" + port + "]");
 						e.printStackTrace();
 					}
 				} catch (NumberFormatException e) {
@@ -144,21 +139,23 @@ public class RegulatorSocket {
 			try {
 				long i = 0;
 				while (!Thread.interrupted()) {
-					if (i++ % 10 == 0) {
-						Packet packet = glue.getPingPacket();
+					if (i++ % 1 == 0) {
+						Packet packet = monitor.getPingPacket();
 						if (packet != null) {
 							packet.send(datagramSocket);
 						}
 					}
-					Packet returningPingPacket = glue.getReturningPingPacket();
+					Packet returningPingPacket = monitor.getReturningPingPacket();
 					if (returningPingPacket != null) {
 						returningPingPacket.send(datagramSocket);
 					}
 					// Send packet
-					Packet packet = glue.getPacket();
-					if (packet != null) {
-						packet.send(datagramSocket);
-					}
+
+//					Packet packet = monitor.getPacket();
+//					if (packet != null) {
+//						packet.send(datagramSocket);
+//					}
+
 					// Sleep
 					Thread.sleep(sendPeriod);
 				}
@@ -173,16 +170,12 @@ public class RegulatorSocket {
 
 	private class Receiver extends Thread {
 		public void run() {
-			try {
+            Packet packet;
+            try {
 				while (!Thread.interrupted()) {
-					// Receive packet
-					Packet packet = Packet.recieve(datagramSocket);
-					glue.setPacket(packet);
-					// Sleep
-					//Thread.sleep(receivePeriod);
+					packet = Packet.recieve(datagramSocket);
+					monitor.setPacket(packet);
 				}
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -190,7 +183,7 @@ public class RegulatorSocket {
 		}
 	}
 
-	private class Server extends Glue {
+	private class Server extends Monitor {
 
 		public Server() {
 			this.transferData = 0;
@@ -213,7 +206,7 @@ public class RegulatorSocket {
 		}
 	}
 
-	private class Client extends Glue {
+	private class Client extends Monitor {
 
 		public Client(InetAddress address, int port) {
 			this.transferData = 0;

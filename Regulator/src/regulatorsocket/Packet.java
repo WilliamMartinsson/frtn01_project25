@@ -8,6 +8,16 @@ import java.nio.ByteBuffer;
 
 public class Packet {
 
+    private static final byte DATA_PACKET = 0;
+    private static final byte OUTGOING_PING_PACKET = 1;
+    private static final byte RETURNING_PING_PACKET = 2;
+
+    private static final byte PACKET_IDENTIFIER = 0;
+    private static final byte TIMESTAMP = 1;
+    private static final byte PAYLOAD = 9;
+
+    private static final int PACKET_SIZE = 17;
+
 	private InetAddress address;
 	private int port;
 	private boolean ping;
@@ -44,7 +54,7 @@ public class Packet {
 		return port;
 	}
 
-	public double getSignal() {
+	public double getPayload() {
 		return signal;
 	}
 
@@ -65,32 +75,31 @@ public class Packet {
 	}
 
 	public DatagramPacket toDatagramPacket() {
-		ByteBuffer buffer = ByteBuffer.allocate(17);
-		if (ping) {
-			if (returningping) {
-				buffer.put((byte) 2);
+		ByteBuffer buffer = ByteBuffer.allocate(PACKET_SIZE);
+		if (this.ping) {
+			if (this.returningping) {
+				buffer.put(RETURNING_PING_PACKET);
 			} else {
-				buffer.put((byte) 1);
+				buffer.put(OUTGOING_PING_PACKET);
 			}
-			buffer.putLong(1, timestamp);
-			buffer.putLong(9, pingtime);
+			buffer.putLong(TIMESTAMP, this.timestamp);
+			buffer.putLong(PAYLOAD,   this.pingtime);
 		} else {
-			buffer.put((byte) 0);
-			buffer.putLong(1, timestamp);
-			buffer.putDouble(9, signal);
+			buffer.put(DATA_PACKET);
+			buffer.putLong(TIMESTAMP, this.timestamp);
+			buffer.putDouble(PAYLOAD, this.signal);
 		}
-		return new DatagramPacket(buffer.array(), 17, address, port);
+        byte[] sendBuffer = buffer.array();
+		return new DatagramPacket(sendBuffer, sendBuffer.length, this.address, this.port);
 	}
 
 	public static Packet fromDatagramPacket(DatagramPacket dp) {
 		ByteBuffer buffer = ByteBuffer.wrap(dp.getData());
-		if (buffer.get(0) == (byte) 0) {
-			return new Packet(dp.getAddress(), dp.getPort(), buffer.getLong(1),
-					buffer.getDouble(9));
+		if (buffer.get(PACKET_IDENTIFIER) == DATA_PACKET) {
+			return new Packet(dp.getAddress(), dp.getPort(), buffer.getLong(TIMESTAMP), buffer.getDouble(PAYLOAD));
 		} else {
-			Packet pingPacket = new Packet(dp.getAddress(), dp.getPort(),
-					buffer.getLong(1), buffer.getLong(9));
-			if (buffer.get(0) == (byte) 2) {
+			Packet pingPacket = new Packet(dp.getAddress(), dp.getPort(), buffer.getLong(TIMESTAMP), buffer.getLong(PAYLOAD));
+			if (buffer.get(PACKET_IDENTIFIER) == RETURNING_PING_PACKET) {
 				pingPacket.setReturningPing();
 			}
 			return pingPacket;
@@ -98,11 +107,11 @@ public class Packet {
 	}
 
 	public void send(DatagramSocket ds) throws IOException {
-		ds.send(toDatagramPacket());
+		ds.send(this.toDatagramPacket());
 	}
 
 	public static Packet recieve(DatagramSocket ds) throws IOException {
-		byte[] dataArray = new byte[1024];
+		byte[] dataArray = new byte[PACKET_SIZE];
 		DatagramPacket packet = new DatagramPacket(dataArray, dataArray.length);
 		ds.receive(packet);
 		return Packet.fromDatagramPacket(packet);
