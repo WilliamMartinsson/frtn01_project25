@@ -5,9 +5,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
+import main.Main;
+
 import regulatorsocket.Util;
 
 import util.IOMonitor;
+import webmonitor.WebMonitor;
 
 import gnu.io.CommPort;
 import gnu.io.CommPortIdentifier;
@@ -158,7 +161,7 @@ public class TwoWaySerialComm {
 		OutputStream out;
 		IOMonitor monitor;
 		ByteBuffer sendBuffer;
-		int count = 0;
+		int count = 2;
 
 		public SerialReader(InputStream in, OutputStream out, int bufferSize,
 				TwoWaySerialComm comm) {
@@ -172,9 +175,10 @@ public class TwoWaySerialComm {
 		public void run() {
 			byte[] receiveBuffer = new byte[4];
 			try {
+				short tmp = 0;
 
 				while (!Thread.interrupted()) {
-					System.out.println("Counter: " + count);
+					count = (count + 1) % 3;
 					switch (count) {
 					case (0):
 						sendBuffer.put(IDENTIFIER, READ_REQUEST);
@@ -188,34 +192,38 @@ public class TwoWaySerialComm {
 						break;
 					case (2):
 						sendBuffer.put(IDENTIFIER, WRITE_DATA);
-						sendBuffer.put(LOW, IOMonitor.getIO(3).getByteLow());
-						sendBuffer.put(HIGH, IOMonitor.getIO(3).getByteHigh());
+						sendBuffer.put(LOW, IOMonitor.getIO(3).getByteHigh());
+						sendBuffer.put(HIGH, IOMonitor.getIO(3).getByteLow());
 						break;
 					}
-					count = (count + 1) % 3;
 					out.write(sendBuffer.array());
+					Thread.sleep(5);
 					in.read(receiveBuffer);
 
 					ByteBuffer bb = ByteBuffer.wrap(receiveBuffer);
 
 					if (bb.get(IDENTIFIER) == SEND_DATA) {
-						System.out.println("Identifier: " + bb.get(IDENTIFIER));
-						System.out.println("Counter: " + count);
-						System.out.println("Channel: " + bb.get(CHANNEL));
 						channel = bb.get(CHANNEL);
 						data = bb.getShort(DATA);
 
 						System.out.println("[RECEIVE][" + channel + "]: "
 								+ data);
+						IOMonitor.getIO(channel).setValue(data);
 					}
-					
-					bb.clear();
-					// Thread.sleep(50);
+
+					if (count == 1) {
+						WebMonitor wm = new WebMonitor(Main.WEBMONITOR_HOST);
+						wm.send(tmp, bb.getShort(DATA), 0);
+
+					} else if (count == 0) {
+						tmp = bb.getShort(DATA);
+					}
+					Thread.sleep(500);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
-				// } catch (InterruptedException e) {
-				// e.printStackTrace();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
 	}

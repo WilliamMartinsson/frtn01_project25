@@ -19,7 +19,7 @@ public class IOMonitor {
 	}
 
 	public synchronized void setValue(double value) {
-		this.value = value;
+		this.value = value/51.2;
 	}
 
 	public synchronized double getValue() {
