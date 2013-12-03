@@ -131,6 +131,7 @@ public class Regul extends Thread {
 				outer.reset();
 				this.sendDataToOpCom(0, 0, 0);
 				try {
+					System.out.println("Switching: "+aaaaaaaaaaaaaaaaaaa);
 					analogOut.setValue(aaaaaaaaaaaaaaaaaaa);
 					aaaaaaaaaaaaaaaaaaa *= -1;
 					Thread.sleep(5000);

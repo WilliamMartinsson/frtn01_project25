@@ -26,14 +26,17 @@ import gnu.io.SerialPort;
 public class TwoWaySerialComm {
 
 	IO signal;
+	private String serialPort;
+	private int baudRate;
+	private int bufferSize;
 
-	public TwoWaySerialComm(String[] args, IO angle, IO pos, IO signal) {
+	public TwoWaySerialComm(String[] args, IO angle, IO pos, IO signal, String serialPort, int baudRate, int bufferSize) {
 		this.signal = signal;
 		// Defaults
-		String serialPort = "/dev/ttyUSB0";
+		//String serialPort = "/dev/ttyUSB0";
 		// int baudRate = 38400;
-		int baudRate = 57600;
-		int bufferSize = 1024; // TODO: Find an appropriate buffer size
+		//int baudRate = 57600;
+		//int bufferSize = 1024; // TODO: Find an appropriate buffer size
 
 		for (int i = 0; i < args.length; i++) {
 			switch (i) {
@@ -77,9 +80,15 @@ public class TwoWaySerialComm {
 		// System.setProperty
 		// Set SerialPorts property for gnu.io.rxtx
 		System.setProperty("gnu.io.rxtx.SerialPorts", serialPort);
+		this.serialPort = serialPort;
+		this.baudRate = baudRate;
+		this.bufferSize = bufferSize;
+	}
+
+	public void start() {
 		try {
 			System.out.println("\n\n[CONNECT]: serial=" + serialPort
-					+ ", baudRate=" + baudRate + ", bufferSize=" + bufferSize);
+					+ ", baudRate=" + baudRate + ", busignalfferSize=" + bufferSize);
 			this.connect(serialPort, baudRate, bufferSize);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -143,6 +152,7 @@ public class TwoWaySerialComm {
 					 * [OUTPUT]='H' [OUTPUT]='EJ '
 					 */
 					// ByteBuffer bb = ByteBuffer.wrap(buffer);
+					
 					System.out.print("[OUTPUT]=");
 					for (int i = 0; i < buffer.length; i++) {
 						// System.out.print(bb.getChar());
@@ -150,6 +160,7 @@ public class TwoWaySerialComm {
 								.toBinaryString((int) buffer[i]));
 					}
 					System.out.println();
+					
 					// System.out.println("[OUTPUT]='" + new String(buffer, 0,
 					// len) + "'");
 				}
@@ -175,13 +186,15 @@ public class TwoWaySerialComm {
 				while (!Thread.interrupted()) {
 					ByteBuffer bb = ByteBuffer.allocate(2);
 					bb.putShort(signal.getShortValue());
-/*
-					System.out.print("[DEBUG]: (");
-					System.out.print(Integer.toBinaryString((int) bb.array()[0]));
-					System.out.print(", ");
-					System.out.print(Integer.toBinaryString((int) bb.array()[1]));
-					System.out.println(")");
-*/
+					
+					/*
+					  System.out.print("[DEBUG]: (");
+					  System.out.print(Integer.toBinaryString((int)
+					  bb.array()[0])); System.out.print(", ");
+					  System.out.print(Integer.toBinaryString((int)
+					  bb.array()[1])); System.out.println(")");
+					 */
+					
 					this.out.write(bb.array());
 					// Sleep
 					Thread.sleep(10);
