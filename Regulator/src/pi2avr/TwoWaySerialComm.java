@@ -31,7 +31,7 @@ public class TwoWaySerialComm {
 		this.signal = signal;
 		// Defaults
 		String serialPort = "/dev/ttyUSB0";
-		//int baudRate = 38400;
+		// int baudRate = 38400;
 		int baudRate = 57600;
 		int bufferSize = 1024; // TODO: Find an appropriate buffer size
 
@@ -131,7 +131,8 @@ public class TwoWaySerialComm {
 		}
 
 		public void run() {
-			byte[] buffer = new byte[this.bufferSize];
+			// byte[] buffer = new byte[this.bufferSize];
+			byte[] buffer = new byte[16];
 			int len = -1;
 			try {
 				while ((len = this.in.read(buffer)) > -1) {
@@ -141,8 +142,16 @@ public class TwoWaySerialComm {
 					 * if you write "HEJ" and press ENTER output will be:
 					 * [OUTPUT]='H' [OUTPUT]='EJ '
 					 */
-					System.out.println("[OUTPUT]='"
-							+ new String(buffer, 0, len) + "'");
+					// ByteBuffer bb = ByteBuffer.wrap(buffer);
+					System.out.print("[OUTPUT]=");
+					for (int i = 0; i < buffer.length; i++) {
+						// System.out.print(bb.getChar());
+						System.out.println(Integer
+								.toBinaryString((int) buffer[i]));
+					}
+					System.out.println();
+					// System.out.println("[OUTPUT]='" + new String(buffer, 0,
+					// len) + "'");
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -166,9 +175,13 @@ public class TwoWaySerialComm {
 				while (!Thread.interrupted()) {
 					ByteBuffer bb = ByteBuffer.allocate(2);
 					bb.putShort(signal.getShortValue());
-					
-					System.out.println("[DEBUG]: ("+bb.array()[0] +","+bb.array()[1]+")");
-
+/*
+					System.out.print("[DEBUG]: (");
+					System.out.print(Integer.toBinaryString((int) bb.array()[0]));
+					System.out.print(", ");
+					System.out.print(Integer.toBinaryString((int) bb.array()[1]));
+					System.out.println(")");
+*/
 					this.out.write(bb.array());
 					// Sleep
 					Thread.sleep(10);

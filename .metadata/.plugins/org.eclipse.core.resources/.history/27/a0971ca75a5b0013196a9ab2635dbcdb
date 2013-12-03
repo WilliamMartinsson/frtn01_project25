@@ -1,0 +1,8 @@
+
+public class JsonSender {
+	
+	public JsonSender(String host, int port){
+		//TODO: Implement!
+	}
+
+}

@@ -117,6 +117,7 @@ public class Regul extends Thread {
 	}
 
 	public void run() {
+		short aaaaaaaaaaaaaaaaaaa = -20;
 		long duration;
 		long t = System.currentTimeMillis();
 		starttime = t;
@@ -130,7 +131,9 @@ public class Regul extends Thread {
 				outer.reset();
 				this.sendDataToOpCom(0, 0, 0);
 				try {
-					analogOut.setValue((short) -20);
+					analogOut.setValue(aaaaaaaaaaaaaaaaaaa);
+					aaaaaaaaaaaaaaaaaaa *= -1;
+					Thread.sleep(5000);
 				} catch (Exception e) {
 					System.out.println("Failed to write to analog output");
 				}

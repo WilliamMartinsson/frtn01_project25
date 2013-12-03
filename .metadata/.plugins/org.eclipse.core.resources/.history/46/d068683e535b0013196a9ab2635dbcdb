@@ -1,0 +1,35 @@
+import java.util.HashMap;
+
+public class IO {
+
+	private short value;
+	private int id;
+	private HashMap<Integer, IO> ids = new HashMap<Integer, IO>();
+
+	private IO(int id) {
+		this.id = id;
+		value = 0;
+	}
+
+	public synchronized void setValue(short value) {
+		this.value = value;
+	}
+
+	public synchronized short getValue() {
+		return this.value;
+	}
+
+	public synchronized int getId() {
+		return id;
+	}
+
+	public static synchronized IO getIO(int id) {
+		if (ids.containsKey(id)) {
+			return ids.get(id);
+		} else {
+			IO io = new IO(id);
+			ids.put(id, io);
+			return io;
+		}
+	}
+}

@@ -1,0 +1,17 @@
+package client;
+
+import pi2avr.TwoWaySerialComm;
+import regulator.Regul;
+import util.IO;
+
+public class Main {
+
+	public static void main(String[] args) {
+		IO angle = IO.getIO(0);
+		IO pos = IO.getIO(1);
+		IO ref = IO.getIO(2);
+		Regul regul = new Regul(0);
+		TwoWaySerialComm comm = new TwoWaySerialComm(new String[]{}, io);
+	}
+
+}
