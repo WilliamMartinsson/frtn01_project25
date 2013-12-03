@@ -7,7 +7,7 @@ import util.IO;
 public class Client {
 	
 	public Client(){
-		IO angle = IO.getIO(0);
+        IO angle = IO.getIO(0);
 		IO pos = IO.getIO(1);
 		IO signal = IO.getIO(2);
 		signal.setValue(-10);
