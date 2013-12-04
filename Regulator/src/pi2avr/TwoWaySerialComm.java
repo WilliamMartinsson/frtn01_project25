@@ -3,10 +3,8 @@ package pi2avr;
 import gnu.io.CommPort;
 import gnu.io.CommPortIdentifier;
 import gnu.io.SerialPort;
-import main.Main;
 import regulatorsocket.Util;
 import util.IOMonitor;
-import webmonitor.WebMonitor;
 
 import java.io.IOException;
 import java.io.InputStream;
