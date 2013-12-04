@@ -10,8 +10,6 @@ public class Main {
 	public static final int REGULATOR_PORT = 12345;
 
 	public static void main(String[] args) {
-		WebMonitor wm = new WebMonitor(WEBMONITOR_HOST);
-        wm.send(111,222,333);
 	}
 
 }

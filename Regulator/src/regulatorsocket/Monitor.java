@@ -54,6 +54,12 @@ public abstract class Monitor {
                 if (packet.isReturningPing()) {
                     ping = time - packet.getPing();
                     Util.print("Received (Monitor): " + time + " Ping [" + ping + " ms]");
+
+//                    long time1 = System.currentTimeMillis();
+//                    WebMonitor web = new WebMonitor("localhost:3000");
+//                    web.send(2, 2, (int) this.ping);
+//                    Util.print("[WEB_DIFF]: " + String.valueOf(System.currentTimeMillis() - time1) + "ms");
+
                 } else {
                     packet.setReturningPing();
                     returningPingPacket = packet;

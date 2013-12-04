@@ -3,12 +3,9 @@ package webmonitor;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 
 
@@ -33,7 +30,7 @@ public class WebMonitor {
      * @param position
      * @param latency
      */
-	public void send(int angle, int position, int latency) {
+	public void send(double angle, double position, double latency, double controlOutput) {
         HttpURLConnection connection;
         OutputStream output;
         InputStream response;
@@ -45,7 +42,7 @@ public class WebMonitor {
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=" + CHARSET);
 
             output = connection.getOutputStream();
-            output.write(WebMonitor.postParams(angle, position, latency));
+            output.write(WebMonitor.postParams(angle, position, latency, controlOutput));
 
             response = connection.getInputStream(); // fires the POST request
             response.close();
@@ -58,11 +55,9 @@ public class WebMonitor {
      * @return
      */
     public HashMap<String, Double> getConfiguration() {
-        HttpURLConnection connection;
         try {
-            connection = (HttpURLConnection) new URL(url + PROCESS_CONSTANTS_URI).openConnection();
-            String jsonString = WebMonitor.inputStreamToString(connection.getInputStream());
-
+            BufferedReader in = new BufferedReader(new InputStreamReader(new URL(url + PROCESS_CONSTANTS_URI).openStream()));
+            String jsonString = WebMonitor.inputStreamToString(in);
             return WebMonitor.toHashConfig(jsonString);
         } catch (IOException e) { e.printStackTrace(); }
 
@@ -70,19 +65,19 @@ public class WebMonitor {
     }
 
 
-    private static byte[] postParams(int angle, int position, int latency) {
-        return String.format("angle=%d&position=%d&latency=%d",  angle, position, latency).getBytes();
+    private static byte[] postParams(double angle, double position, double latency, double controlOutput) {
+        return String.format("angle=%f&position=%f&latency=%f&control_output=%f",  angle, position, latency, controlOutput).getBytes();
     }
 
 
-    private static String inputStreamToString(InputStream in) {
-        byte[] b = new byte[1024];
+    private static String inputStreamToString(BufferedReader in) {
         try {
-            in.read(b);
+            String jsonString = in.readLine();
+            in.close();
+            return jsonString;
         } catch (IOException e) { e.printStackTrace(); }
 
-        ByteBuffer buffer = ByteBuffer.wrap(b);
-        return new String(buffer.array());
+        return null;
     }
 
 

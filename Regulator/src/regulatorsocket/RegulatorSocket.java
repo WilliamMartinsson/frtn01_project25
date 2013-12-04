@@ -8,7 +8,7 @@ import java.util.LinkedList;
 
 public class RegulatorSocket {
 
-	private int sendPeriod = 200;
+	private int sendPeriod = 150;
 	private DatagramSocket datagramSocket;
 	private Monitor monitor;
 
@@ -135,11 +135,12 @@ public class RegulatorSocket {
 	}
 
 	private class Sender extends Thread {
+
 		public void run() {
 			try {
 				long i = 0;
 				while (!Thread.interrupted()) {
-					if (i++ % 1 == 0) {
+					if (i++ % 10 == 0) {
 						Packet packet = monitor.getPingPacket();
 						if (packet != null) {
 							packet.send(datagramSocket);
@@ -151,10 +152,10 @@ public class RegulatorSocket {
 					}
 					// Send packet
 
-//					Packet packet = monitor.getPacket();
-//					if (packet != null) {
-//						packet.send(datagramSocket);
-//					}
+					Packet packet = monitor.getPacket();
+					if (packet != null) {
+						packet.send(datagramSocket);
+					}
 
 					// Sleep
 					Thread.sleep(sendPeriod);
@@ -175,7 +176,7 @@ public class RegulatorSocket {
 				while (!Thread.interrupted()) {
 					packet = Packet.recieve(datagramSocket);
 					monitor.setPacket(packet);
-				}
+                }
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
