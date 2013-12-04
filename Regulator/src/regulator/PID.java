@@ -40,8 +40,6 @@ public class PID {
         this.D = this.ad * this.D - this.bd * (yball - this.yOld);
         this.v = p.K * (p.Beta * yref - yball) + I + D;
         this.yOld = yball;
-        System.out.println("K " + p.K);
-        System.out.println("D " + D);
         return this.v;
     }
 

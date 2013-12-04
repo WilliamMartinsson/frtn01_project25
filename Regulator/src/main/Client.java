@@ -10,9 +10,8 @@ public class Client {
 		IOMonitor angle = IOMonitor.getIO(IOMonitor.ANGLE);
 		IOMonitor pos = IOMonitor.getIO(IOMonitor.POSITION);
 		IOMonitor y = IOMonitor.getIO(IOMonitor.Y);
-		y.setValue(-10);
 		Regul regul = new Regul(0, angle, pos, y);
-		//regul.setBEAMMode();
+		regul.setBALLMode();
 		TwoWaySerialComm comm = new TwoWaySerialComm(new String[] {}, angle,
 				pos, y,"/dev/ttyUSB0",57600,1024);
 		comm.start();
