@@ -30,7 +30,7 @@ public class WebMonitor {
      * @param position
      * @param latency
      */
-	public void send(int angle, int position, int latency) {
+	public void send(double angle, double position, double latency, double controlOutput) {
         HttpURLConnection connection;
         OutputStream output;
         InputStream response;
@@ -42,7 +42,7 @@ public class WebMonitor {
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=" + CHARSET);
 
             output = connection.getOutputStream();
-            output.write(WebMonitor.postParams(angle, position, latency));
+            output.write(WebMonitor.postParams(angle, position, latency, controlOutput));
 
             response = connection.getInputStream(); // fires the POST request
             response.close();
@@ -55,7 +55,6 @@ public class WebMonitor {
      * @return
      */
     public HashMap<String, Double> getConfiguration() {
-        HttpURLConnection connection;
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(new URL(url + PROCESS_CONSTANTS_URI).openStream()));
             String jsonString = WebMonitor.inputStreamToString(in);
@@ -66,19 +65,16 @@ public class WebMonitor {
     }
 
 
-    private static byte[] postParams(int angle, int position, int latency) {
-        return String.format("angle=%d&position=%d&latency=%d",  angle, position, latency).getBytes();
+    private static byte[] postParams(double angle, double position, double latency, double controlOutput) {
+        return String.format("angle=%f&position=%f&latency=%f&control_output=%f",  angle, position, latency, controlOutput).getBytes();
     }
 
 
     private static String inputStreamToString(BufferedReader in) {
-        byte[] b = new byte[1024];
-        String result;
         try {
             String jsonString = in.readLine();
             in.close();
             return jsonString;
-
         } catch (IOException e) { e.printStackTrace(); }
 
         return null;

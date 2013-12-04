@@ -2,6 +2,7 @@ package regulator;
 
 import se.lth.control.realtime.Semaphore;
 import util.IOMonitor;
+import webmonitor.WebMonitor;
 
 public class Regul extends Thread {
 	public static final int OFF = 0;
@@ -25,6 +26,8 @@ public class Regul extends Thread {
 
 	private ModeMonitor modeMon;
 
+    private WebMonitor webMonitor;
+
 	// Inner monitor class
 	class ModeMonitor {
 		private int mode;
@@ -39,16 +42,18 @@ public class Regul extends Thread {
 		}
 	}
 
-	public Regul(int pri, IOMonitor angle, IOMonitor pos, IOMonitor ref) {
-		priority = pri;
-		mutex = new Semaphore(1);
-		analogInAngle = angle;
+	public Regul(int pri, IOMonitor angle, IOMonitor pos, IOMonitor ref, WebMonitor webMonitor) {
+		this.priority = pri;
+        this.mutex = new Semaphore(1);
+        this.analogInAngle = angle;
 		// analogInAngle = new AnalogIn(0);
-		analogInPosition = pos;
+        this.analogInPosition = pos;
 		// analogInPosition = new AnalogIn(1);
-		analogOut = ref;
+        this.analogOut = ref;
 		// analogOut = new AnalogOut(0);
-		modeMon = new ModeMonitor();
+        this.modeMon = new ModeMonitor();
+
+        this.webMonitor = webMonitor;
 	}
 
 	/*
@@ -63,6 +68,7 @@ public class Regul extends Thread {
 	private void sendDataToOpCom(double yref, double y, double u) {
 		// TODO: Implement send to gui server.
 	}
+
 
 	public synchronized void setInnerParameters(PIParameters p) {
 		inner.setParameters(p);
@@ -165,7 +171,6 @@ public class Regul extends Thread {
 				break;
 			}
 			case BALL: {
-
 				try {
 					angle = analogInAngle.getValue();
 					position = analogInPosition.getValue();
@@ -175,11 +180,11 @@ public class Regul extends Thread {
 				}
 				// double ref = referenceGenerator.getRef();
 				double ref = 0.0;
-				double uOuter = limit(outer.calculateOutput(position, ref),
-						-10, 10);
+				double uOuter = limit(outer.calculateOutput(position, ref), -10, 10);
 				double u = limit(inner.calculateOutput(angle, uOuter), -10, 10);
+                double controlOutput = u*1000;
 				try {
-					analogOut.setValue(u*1000);
+					analogOut.setValue(controlOutput);
 				} catch (Exception e) {
 					System.out.println("Failed to write to analog output");
 				}
@@ -187,6 +192,9 @@ public class Regul extends Thread {
 				outer.updateState(uOuter);
 				inner.updateState(u);
 				this.sendDataToOpCom(ref, position, u);
+
+                this.asyncPostToWebMonitor(angle, position, 0, controlOutput); // Sends data to Web Monitoring service
+
 				break;
 			}
 			default: {
@@ -206,4 +214,19 @@ public class Regul extends Thread {
 		}
 		mutex.give();
 	}
+
+    // Asynchronously sends data to WebMonitor
+    public void asyncPostToWebMonitor(final double angle, final double position, final double latency, final double controlOutput){
+        Runnable task = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    webMonitor.send(angle, position, latency, controlOutput);
+                } catch (Exception ex) { ex.printStackTrace(); }
+            }
+        };
+        new Thread(task, "WebMonitorThread").start();
+    }
+
+
 }

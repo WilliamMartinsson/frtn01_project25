@@ -1,7 +1,5 @@
 package regulatorsocket;
 
-import webmonitor.WebMonitor;
-
 import java.net.InetAddress;
 
 public abstract class Monitor {
@@ -57,10 +55,10 @@ public abstract class Monitor {
                     ping = time - packet.getPing();
                     Util.print("Received (Monitor): " + time + " Ping [" + ping + " ms]");
 
-                    long time1 = System.currentTimeMillis();
-                    WebMonitor web = new WebMonitor("localhost:3000");
-                    web.send(2, 2, (int) this.ping);
-                    Util.print("[WEB_DIFF]: " + String.valueOf(System.currentTimeMillis() - time1) + "ms");
+//                    long time1 = System.currentTimeMillis();
+//                    WebMonitor web = new WebMonitor("localhost:3000");
+//                    web.send(2, 2, (int) this.ping);
+//                    Util.print("[WEB_DIFF]: " + String.valueOf(System.currentTimeMillis() - time1) + "ms");
 
                 } else {
                     packet.setReturningPing();
