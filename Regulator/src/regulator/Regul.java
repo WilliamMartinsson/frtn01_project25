@@ -43,11 +43,8 @@ public class Regul extends Thread {
 		priority = pri;
 		mutex = new Semaphore(1);
 		analogInAngle = angle;
-		// analogInAngle = new AnalogIn(0);
 		analogInPosition = pos;
-		// analogInPosition = new AnalogIn(1);
 		analogOut = ref;
-		// analogOut = new AnalogOut(0);
 		modeMon = new ModeMonitor();
 	}
 

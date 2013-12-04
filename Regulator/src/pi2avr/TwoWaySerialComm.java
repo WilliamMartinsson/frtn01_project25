@@ -200,9 +200,16 @@ public class TwoWaySerialComm {
 					out.write(sendBuffer.array());
 					Thread.sleep(5);
 					in.read(receiveBuffer);
+					
+					System.out.println(receiveBuffer[0]);
+					System.out.println(receiveBuffer[1]);
+					System.out.println(receiveBuffer[2]);
+					System.out.println(receiveBuffer[3]);
+					
 
 					ByteBuffer bb = ByteBuffer.wrap(receiveBuffer);
 
+					
 					if (bb.get(IDENTIFIER) == SEND_DATA) {
 						channel = bb.get(CHANNEL);
 						data = bb.getShort(DATA);
@@ -211,9 +218,9 @@ public class TwoWaySerialComm {
 								+ data);
 						IOMonitor.getIO(channel).setValue(data);
 					}else{
-						System.out.println("HIGH:   " + IOMonitor.getIO(2).getByteHigh());
-						System.out.println("LOW:    " + IOMonitor.getIO(2).getByteLow());
-						System.out.println("Double: " + IOMonitor.getIO(2).getValue());
+					//	System.out.println("HIGH:   " + IOMonitor.getIO(2).getByteHigh());
+						//System.out.println("LOW:    " + IOMonitor.getIO(2).getByteLow());
+					//	System.out.println("Double: " + IOMonitor.getIO(2).getValue());
 					}
 
 					/*
