@@ -1,20 +1,17 @@
 package pi2avr;
 
+import gnu.io.CommPort;
+import gnu.io.CommPortIdentifier;
+import gnu.io.SerialPort;
+import main.Main;
+import regulatorsocket.Util;
+import util.IOMonitor;
+import webmonitor.WebMonitor;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-
-import main.Main;
-
-import regulatorsocket.Util;
-
-import util.IOMonitor;
-import webmonitor.WebMonitor;
-
-import gnu.io.CommPort;
-import gnu.io.CommPortIdentifier;
-import gnu.io.SerialPort;
 
 // Dependencies:
 // $ sudo apt-get install librxtx-java
@@ -38,7 +35,7 @@ public class TwoWaySerialComm {
 		// String serialPort = "/dev/ttyUSB0";
 		// int baudRate = 38400;
 		// int baudRate = 57600;
-		// int bufferSize = 1024; // TODO: Find an appropriate buffer size
+		// int bufferSize = 1024;
 
 		for (int i = 0; i < args.length; i++) {
 			switch (i) {
@@ -78,9 +75,7 @@ public class TwoWaySerialComm {
 		System.out.println("[USING] baud rate:   " + baudRate);
 		System.out.println("[USING] buffer size: " + bufferSize);
 
-		// TODO: Potentially not necessary to set it explicitly with
-		// System.setProperty
-		// Set SerialPorts property for gnu.io.rxtx
+		// System.setProperty: SerialPorts property for gnu.io.rxtx
 		System.setProperty("gnu.io.rxtx.SerialPorts", serialPort);
 		this.serialPort = serialPort;
 		this.baudRate = baudRate;
