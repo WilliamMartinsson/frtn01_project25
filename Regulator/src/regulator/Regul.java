@@ -117,7 +117,7 @@ public class Regul extends Thread {
 	}
 
 	public void run() {
-		short aaaaaaaaaaaaaaaaaaa = -10;
+		//short aaaaaaaaaaaaaaaaaaa = -2000;
 		long duration;
 		long t = System.currentTimeMillis();
 		starttime = t;
@@ -136,7 +136,8 @@ public class Regul extends Thread {
 					//System.out.println("Switching: "+aaaaaaaaaaaaaaaaaaa);
 					//analogOut.setValue(aaaaaaaaaaaaaaaaaaa);
 					//aaaaaaaaaaaaaaaaaaa *= -1;
-					Thread.sleep(5000);
+					//System.out.println("Id(y): " + analogOut.getId());
+					//Thread.sleep(2000);
 					angle = analogInAngle.getValue();
 					position = analogInPosition.getValue();
 				} catch (Exception e) {
@@ -157,7 +158,7 @@ public class Regul extends Thread {
 				this.sendDataToOpCom(yref, yAnalog, u);
 				inner.updateState(u);
 				try {
-					analogOut.setValue(u);
+					analogOut.setValue(u*1000);
 				} catch (Exception e) {
 					System.out.println("Failed to write to analog output");
 				}
@@ -178,14 +179,13 @@ public class Regul extends Thread {
 						-10, 10);
 				double u = limit(inner.calculateOutput(angle, uOuter), -10, 10);
 				try {
-					analogOut.setValue(u);
+					analogOut.setValue(u*1000);
 				} catch (Exception e) {
 					System.out.println("Failed to write to analog output");
 				}
 
 				outer.updateState(uOuter);
 				inner.updateState(u);
-				System.out.println("Styr:" + u);
 				this.sendDataToOpCom(ref, position, u);
 				break;
 			}

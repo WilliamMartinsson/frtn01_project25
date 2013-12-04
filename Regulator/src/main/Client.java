@@ -17,12 +17,12 @@ public class Client {
         long time = System.currentTimeMillis();
         WebMonitor wm = new WebMonitor("cloudregulator.herokuapp.com");
         HashMap<String, Double> constants = wm.getConfiguration();
-        System.out.println("[GET] Constants: " + (System.currentTimeMillis() - time) + "[ms]");
+        System.out.println("[GET] Constants: " + (System.currentTimeMillis() - time) + "ms");
 
 
 		y.setValue(-10);
 		Regul regul = new Regul(0, angle, pos, y);
-		//regul.setBEAMMode();
+		regul.setBALLMode();
 		TwoWaySerialComm comm = new TwoWaySerialComm(new String[] {}, angle,
 				pos, y,"/dev/ttyUSB0",57600,1024);
 		comm.start();

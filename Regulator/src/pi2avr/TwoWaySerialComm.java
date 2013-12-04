@@ -187,8 +187,9 @@ public class TwoWaySerialComm {
 						break;
 					case (2):
 						sendBuffer.put(IDENTIFIER, WRITE_DATA);
-						sendBuffer.put(LOW, IOMonitor.getIO(3).getByteHigh());
-						sendBuffer.put(HIGH, IOMonitor.getIO(3).getByteLow());
+						sendBuffer.put(LOW, IOMonitor.getIO(2).getByteLow());
+						sendBuffer.put(HIGH, IOMonitor.getIO(2).getByteHigh());
+						
 						break;
 					}
 					out.write(sendBuffer.array());
@@ -204,8 +205,13 @@ public class TwoWaySerialComm {
 						System.out.println("[RECEIVE][" + channel + "]: "
 								+ data);
 						IOMonitor.getIO(channel).setValue(data);
+					}else{
+						System.out.println("HIGH:   " + IOMonitor.getIO(2).getByteHigh());
+						System.out.println("LOW:    " + IOMonitor.getIO(2).getByteLow());
+						System.out.println("Double: " + IOMonitor.getIO(2).getValue());
 					}
 
+					/*
 					if (count == 1) {
 						WebMonitor wm = new WebMonitor(Main.WEBMONITOR_HOST);
 						wm.send(tmp, bb.getShort(DATA), 0);
@@ -213,7 +219,8 @@ public class TwoWaySerialComm {
 					} else if (count == 0) {
 						tmp = bb.getShort(DATA);
 					}
-					Thread.sleep(500);
+					*/
+				//	Thread.sleep(500);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
