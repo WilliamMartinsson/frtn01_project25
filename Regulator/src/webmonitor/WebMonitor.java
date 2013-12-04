@@ -3,12 +3,9 @@ package webmonitor;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 
 
@@ -60,9 +57,8 @@ public class WebMonitor {
     public HashMap<String, Double> getConfiguration() {
         HttpURLConnection connection;
         try {
-            connection = (HttpURLConnection) new URL(url + PROCESS_CONSTANTS_URI).openConnection();
-            String jsonString = WebMonitor.inputStreamToString(connection.getInputStream());
-
+            BufferedReader in = new BufferedReader(new InputStreamReader(new URL(url + PROCESS_CONSTANTS_URI).openStream()));
+            String jsonString = WebMonitor.inputStreamToString(in);
             return WebMonitor.toHashConfig(jsonString);
         } catch (IOException e) { e.printStackTrace(); }
 
@@ -75,14 +71,17 @@ public class WebMonitor {
     }
 
 
-    private static String inputStreamToString(InputStream in) {
+    private static String inputStreamToString(BufferedReader in) {
         byte[] b = new byte[1024];
+        String result;
         try {
-            in.read(b);
+            String jsonString = in.readLine();
+            in.close();
+            return jsonString;
+
         } catch (IOException e) { e.printStackTrace(); }
 
-        ByteBuffer buffer = ByteBuffer.wrap(b);
-        return new String(buffer.array());
+        return null;
     }
 
 
