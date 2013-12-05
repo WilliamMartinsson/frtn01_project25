@@ -11,7 +11,7 @@ public class PI {
         p.Ti   = 0;
         p.Tr   = 10;
         p.Beta = 1;
-        p.H    = 0.01;
+        p.H    = 0.1;
         p.integratorOn = false;
         this.setParameters(p);
         I = 0;

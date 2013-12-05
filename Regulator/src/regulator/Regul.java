@@ -124,7 +124,6 @@ public class Regul extends Thread {
 	}
 
 	public void run() {
-		//short aaaaaaaaaaaaaaaaaaa = -2000;
 		long duration;
 		long t = System.currentTimeMillis();
 		starttime = t;
@@ -140,11 +139,6 @@ public class Regul extends Thread {
 				outer.reset();
 				this.sendDataToOpCom(0, 0, 0);
 				try {
-					//System.out.println("Switching: "+aaaaaaaaaaaaaaaaaaa);
-					//analogOut.setValue(aaaaaaaaaaaaaaaaaaa);
-					//aaaaaaaaaaaaaaaaaaa *= -1;
-					//System.out.println("Id(y): " + analogOut.getId());
-					//Thread.sleep(2000);
 					angle = analogInAngle.getValue();
 					position = analogInPosition.getValue();
 				} catch (Exception e) {
@@ -179,22 +173,25 @@ public class Regul extends Thread {
 					System.out
 							.println("Failed to get analog output: angle or position");
 				}
-				// double ref = referenceGenerator.getRef();
+				System.out.println("Angle: " + angle);
+				System.out.println("===============Position: " + position);
 				double ref = 0.0;
-				double uOuter = limit(outer.calculateOutput(position, ref), -10, 10);
-				double u = limit(inner.calculateOutput(angle, uOuter), -10, 10);
-                double controlOutput = u*1000;
+				double uOuter = limit(outer.calculateOutput(position, ref), -512, 511);
+				double u = limit(inner.calculateOutput(angle, uOuter), -512, 511);
+                double controlOutput = u;
 				try {
 					analogOut.setValue(controlOutput);
 				} catch (Exception e) {
 					System.out.println("Failed to write to analog output");
 				}
-
+				System.out.println("====================================== U:" + u);
+//				System.out.println("PI: " + inner.getParameters().toString());
+//				System.out.println("PID: " + outer.getParameters().toString());
 				outer.updateState(uOuter);
 				inner.updateState(u);
 				this.sendDataToOpCom(ref, position, u);
 
-                this.asyncPostToWebMonitor(angle, position, 0, controlOutput); // Sends data to Web Monitoring service (async)
+				this.asyncPostToWebMonitor(angle, position, 0, controlOutput); // Sends data to Web Monitoring service (async)
 
 				break;
 			}

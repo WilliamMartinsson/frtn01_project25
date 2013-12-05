@@ -73,7 +73,6 @@ public class TwoWaySerialComm {
 		System.out.println("[USING] baud rate:   " + baudRate);
 		System.out.println("[USING] buffer size: " + bufferSize);
 
-		// System.setProperty: SerialPorts property for gnu.io.rxtx
 		System.setProperty("gnu.io.rxtx.SerialPorts", serialPort);
 		this.serialPort = serialPort;
 		this.baudRate = baudRate;
@@ -194,11 +193,6 @@ public class TwoWaySerialComm {
 					Thread.sleep(5);
 					in.read(receiveBuffer);
 					
-					System.out.println(receiveBuffer[0]);
-					System.out.println(receiveBuffer[1]);
-					System.out.println(receiveBuffer[2]);
-					System.out.println(receiveBuffer[3]);
-					
 
 					ByteBuffer bb = ByteBuffer.wrap(receiveBuffer);
 
@@ -207,14 +201,8 @@ public class TwoWaySerialComm {
 						channel = bb.get(CHANNEL);
 						data = bb.getShort(DATA);
 
-//                        String channelString = "";
-//                        if (channel == CHANEL_0)
-//                            channelString = "What";
-//                        else if (channel == CHANEL_1)
-//                            channelString = "Whatever";
-
-						System.out.println("[RECEIVE][" + channel + "]: "
-								+ data);
+//						System.out.println("[RECEIVE][" + channel + "]: "
+//								+ data);
 						IOMonitor.getIO(channel).setValue(data);
 					}else{
 					//	System.out.println("HIGH:   " + IOMonitor.getIO(2).getByteHigh());
@@ -241,65 +229,65 @@ public class TwoWaySerialComm {
 		}
 	}
 
-	public static class SerialWriter implements Runnable {
-
-		private static final byte READ_REQUEST = (byte) 'R';
-		private static final byte WRITE_DATA = (byte) 'W';
-
-		private static final byte CHANEL_0 = (byte) 0;
-		private static final byte CHANEL_1 = (byte) 1;
-
-		private static final byte PADDING_DATA = (byte) 0xff;
-
-		private static final int IDENTIFIER = 0;
-		private static final int CHANNEL = 1;
-		private static final int PADDING = 2;
-		private static final int LOW = 1;
-		private static final int HIGH = 2;
-
-		OutputStream out;
-		IOMonitor monitor;
-		ByteBuffer buffer;
-
-		public SerialWriter(OutputStream out, IOMonitor monitor) {
-			this.out = out;
-			this.monitor = monitor;
-			this.buffer = ByteBuffer.allocate(3);
-		}
-
-		public void run() {
-			try {
-				while (!Thread.interrupted()) {
-
-					switch (monitor.getId()) {
-					case (IOMonitor.ANGLE):
-						buffer.put(IDENTIFIER, READ_REQUEST);
-						buffer.put(CHANNEL, CHANEL_0);
-						buffer.put(PADDING, PADDING_DATA);
-						break;
-					case (IOMonitor.POSITION):
-						buffer.put(IDENTIFIER, READ_REQUEST);
-						buffer.put(CHANNEL, CHANEL_1);
-						buffer.put(PADDING, PADDING_DATA);
-						break;
-					case (IOMonitor.Y):
-						buffer.put(IDENTIFIER, WRITE_DATA);
-						buffer.put(LOW, monitor.getByteLow());
-						buffer.put(HIGH, monitor.getByteHigh());
-						break;
-					}
-					out.write(buffer.array());
-					// Sleep
-					Thread.sleep(10);
-				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			Util.print("Thread stopped!");
-
-		}
-	}
+//	public static class SerialWriter implements Runnable {
+//
+//		private static final byte READ_REQUEST = (byte) 'R';
+//		private static final byte WRITE_DATA = (byte) 'W';
+//
+//		private static final byte CHANEL_0 = (byte) 0;
+//		private static final byte CHANEL_1 = (byte) 1;
+//
+//		private static final byte PADDING_DATA = (byte) 0xff;
+//
+//		private static final int IDENTIFIER = 0;
+//		private static final int CHANNEL = 1;
+//		private static final int PADDING = 2;
+//		private static final int LOW = 1;
+//		private static final int HIGH = 2;
+//
+//		OutputStream out;
+//		IOMonitor monitor;
+//		ByteBuffer buffer;
+//
+//		public SerialWriter(OutputStream out, IOMonitor monitor) {
+//			this.out = out;
+//			this.monitor = monitor;
+//			this.buffer = ByteBuffer.allocate(3);
+//		}
+//
+//		public void run() {
+//			try {
+//				while (!Thread.interrupted()) {
+//
+//					switch (monitor.getId()) {
+//					case (IOMonitor.ANGLE):
+//						buffer.put(IDENTIFIER, READ_REQUEST);
+//						buffer.put(CHANNEL, CHANEL_0);
+//						buffer.put(PADDING, PADDING_DATA);
+//						break;
+//					case (IOMonitor.POSITION):
+//						buffer.put(IDENTIFIER, READ_REQUEST);
+//						buffer.put(CHANNEL, CHANEL_1);
+//						buffer.put(PADDING, PADDING_DATA);
+//						break;
+//					case (IOMonitor.Y):
+//						buffer.put(IDENTIFIER, WRITE_DATA);
+//						buffer.put(LOW, monitor.getByteLow());
+//						buffer.put(HIGH, monitor.getByteHigh());
+//						break;
+//					}
+//					out.write(buffer.array());
+//					// Sleep
+//					Thread.sleep(10);
+//				}
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//			Util.print("Thread stopped!");
+//
+//		}
+//	}
 }

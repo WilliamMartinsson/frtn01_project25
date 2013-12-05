@@ -14,5 +14,11 @@ public class PIParameters implements Cloneable {
 			return null;
 		}
 	}
+	
+    public String toString(){
+    	return ("K: " + String.valueOf(K) + " Ti: " + String.valueOf(Ti) + " Tr: "
+    			+  String.valueOf(Tr) + " Beta: " +  String.valueOf(Beta) 
+    			+ " H: " +  String.valueOf(H));
+    }
 }
 

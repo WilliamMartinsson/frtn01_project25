@@ -10,7 +10,7 @@ public class RegulatorSocket {
 
 	private int sendPeriod = 150;
 	private DatagramSocket datagramSocket;
-	private Monitor monitor;
+	private SocketMonitor monitor;
 
 	public RegulatorSocket(int port, String host) throws IOException {
 		monitor = new Client(InetAddress.getByName(host), port);
@@ -50,7 +50,7 @@ public class RegulatorSocket {
 		r.start();
 	}
 
-	public Monitor getMonitor() {
+	public SocketMonitor getMonitor() {
 		return monitor;
 	}
 
@@ -184,10 +184,10 @@ public class RegulatorSocket {
 		}
 	}
 
-	private class Server extends Monitor {
+	private class Server extends SocketMonitor {
 
 		public Server() {
-			this.transferData = 0;
+			this.value = 0;
 			this.localData = 0;
 			this.address = null;
 			this.port = -1;
@@ -202,15 +202,15 @@ public class RegulatorSocket {
 		}
 
 		public synchronized Packet getPacket() {
-			transferData = localData;
+			value = localData;
 			return super.getPacket();
 		}
 	}
 
-	private class Client extends Monitor {
+	private class Client extends SocketMonitor {
 
 		public Client(InetAddress address, int port) {
-			this.transferData = 0;
+			this.value = 0;
 			this.localData = 0;
 			this.address = address;
 			this.port = port;

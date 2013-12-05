@@ -8,10 +8,9 @@ public class IOMonitor {
 	public static final int POSITION = 1;
 	public static final int Y = 2;
 
-	private double value;
+	protected double value;
 	private int id;
 	private static HashMap<Integer, IOMonitor> ids = new HashMap<Integer, IOMonitor>();
-	private ByteBuffer bb;
 
 	private IOMonitor(int id) {
 		this.id = id;
@@ -19,7 +18,7 @@ public class IOMonitor {
 	}
 
 	public synchronized void setValue(double value) {
-		this.value = value/51.2;
+		this.value = value;
 	}
 
 	public synchronized double getValue() {
