@@ -19,7 +19,8 @@ public class WebMonitor {
     private HashMap<String, Double> PIconfig;
     private HashMap<String, Double> PIDconfig;
 
-    private HashMap<String, String> reference;
+    private int manualMode;
+    private double  reference;
 
     /**
      * Creates a WebMonitor with a specified URL.
@@ -29,7 +30,8 @@ public class WebMonitor {
         this.url = "http://" + url;
         PIDconfig = new HashMap<String, Double>();
         PIconfig = new HashMap<String, Double>();
-        reference = new HashMap<String, String>();
+        manualMode = 0;
+        reference = 0.0;
         System.setProperty("http.keepAlive", "false"); // Don't keep connections alive
     }
 
@@ -54,6 +56,7 @@ public class WebMonitor {
             output.write(WebMonitor.postParams(angle, position, latency, controlOutput));
 
             response = connection.getInputStream(); // fires the POST request
+
             response.close();
             output.close();
         } catch (IOException e) { e.printStackTrace(); }
@@ -83,7 +86,7 @@ public class WebMonitor {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(new URL(url + REFERENCE_URI).openStream()));
             String jsonString = WebMonitor.inputStreamToString(in);
-            reference = this.toHashReference(jsonString);
+            this.updateRefFields(jsonString);
         } catch (IOException e) { e.printStackTrace(); }
     }
 
@@ -92,7 +95,12 @@ public class WebMonitor {
         return isPID ? PIDconfig : PIconfig;
     }
 
-    public HashMap<String, String> getReference() {
+    public int getRefMode() {
+        return manualMode;
+    }
+
+
+    public double getRefValue() {
         return reference;
     }
 
@@ -128,16 +136,17 @@ public class WebMonitor {
         return config;
     }
 
-    private HashMap<String, String> toHashReference(String jsonString) {
+    private void updateRefFields(String jsonString) {
         try {
             JSONObject json = new JSONObject(jsonString);
-            String man = String.valueOf(json.getBoolean("manual_mode"));
-            reference.put("manual", man);
-            String ref = String.valueOf(json.getDouble("reference_value"));
-            reference.put("reference", ref);
+            boolean manMode = json.getBoolean("manual_mode");
+            if (manMode) {
+                manualMode = 1;
+            } else {
+                manualMode = 0;
+            }
+            reference = json.getDouble("reference_value");
         } catch (JSONException e) { e.printStackTrace(); }
-
-        return reference;
     }
 
 }

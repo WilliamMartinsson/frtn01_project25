@@ -1,14 +1,13 @@
 package main;
 
+import pi2avr.TwoWaySerialComm;
 import regulator.PIDParameters;
 import regulator.PIParameters;
 import regulator.Regul;
-import regulatorsocket.RegulatorSocket;
 import regulatorsocket.SocketMonitor;
 import util.IOMonitor;
 import webmonitor.WebMonitor;
 
-import java.io.IOException;
 import java.util.HashMap;
 
 public class Client {
@@ -21,13 +20,13 @@ public class Client {
 		IOMonitor y = IOMonitor.getIO(IOMonitor.Y);
 
 		SocketMonitor socketMonitor = null;
-		try {
-			RegulatorSocket rs = new RegulatorSocket(Main.REGULATOR_PORT,Main.REGULATOR_HOST);
-			socketMonitor = rs.getMonitor();
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			RegulatorSocket rs = new RegulatorSocket(Main.REGULATOR_PORT, Main.REGULATOR_HOST);
+//			socketMonitor = rs.getMonitor();
+//
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 
         WebMonitor webMonitor = new WebMonitor(Main.WEBMONITOR_HOST);
 
@@ -62,15 +61,13 @@ public class Client {
         regul.setOuterParameters(pidParameters);
 
         webMonitor.setReference();
-        HashMap<String, String> mmmn =  webMonitor.getReference();
 
 		regul.setBALLMode();
 
-
-//		TwoWaySerialComm comm = new TwoWaySerialComm(new String[] {}, angle,
-//				pos, y,"/dev/ttyUSB0",57600,1024);
-//		comm.start();
-//		regul.start();
+		TwoWaySerialComm comm = new TwoWaySerialComm(new String[] {}, angle,
+				pos, y,"/dev/ttyUSB0",57600,1024);
+		comm.start();
+		regul.start();
 	}
 
 	public static void main(String[] args) {

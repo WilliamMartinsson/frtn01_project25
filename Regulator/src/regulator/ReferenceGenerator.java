@@ -1,11 +1,5 @@
 package regulator;
 
-import javax.swing.*;
-import javax.swing.event.*;
-import java.awt.*;
-import java.awt.event.*;
-import se.lth.control.*;
-
 public class ReferenceGenerator extends Thread {
 
     private static final int SQWAVE=0, MANUAL=1;
@@ -39,20 +33,13 @@ public class ReferenceGenerator extends Thread {
         } catch (Exception e) {}
     }
 
-    private synchronized void setRef(double newRef) {
-        ref = newRef;
+    public synchronized  void setAmplitude(double amplitude) {
+        this.amplitude = amplitude;
+        this.manual = amplitude;
     }
 
-    private synchronized void setManual(double newManual) {
-        manual = newManual;
-    }
-
-    private synchronized void setSqMode() {
-        mode = SQWAVE;
-    }
-
-    private synchronized void setManMode() {
-        mode = MANUAL;
+    public synchronized void setMode(int mode) {
+        this.mode = mode;
     }
 
     public synchronized double getRef()

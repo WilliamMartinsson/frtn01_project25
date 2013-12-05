@@ -18,6 +18,8 @@ public class Regul extends Thread {
 	private IOMonitor analogInPosition;
 	private IOMonitor analogOut;
 
+    private long runCount;
+
 	private ReferenceGenerator referenceGenerator;
 	// private OpComProxy opcom;
 
@@ -56,10 +58,13 @@ public class Regul extends Thread {
 		// analogOut = new AnalogOut(0);
         this.modeMon = new ModeMonitor();
         this.webMonitor = webMonitor;
+        this.setRefGen(new ReferenceGenerator(1));
+        this.runCount = 0;
 	}
 
 	public void setRefGen(ReferenceGenerator referenceGenerator) {
 		this.referenceGenerator = referenceGenerator;
+        this.referenceGenerator.start();
 	}
 
 	public synchronized void setInnerParameters(PIParameters p) {
@@ -163,31 +168,40 @@ public class Regul extends Thread {
 					System.out
 							.println("Failed to get analog output: angle or position");
 				}
-				System.out.println("Angle: " + angle);
-				System.out.println("===============Position: " + position);
+
+                referenceGenerator.setMode(webMonitor.getRefMode());
+                double webRef = webMonitor.getRefValue();
+//                System.out.println("WEBREF: " + webRef);
+                referenceGenerator.setAmplitude(webRef);
+
                 double ref = referenceGenerator.getRef();
-                System.out.println("Ref: " + ref);
-				double uOuter = limit(outer.calculateOutput(position, ref), -512, 511);
-				double u = limit(inner.calculateOutput(angle, uOuter), -512, 511);
+//                System.out.println("REF:    " + ref);
+
+
+                double uOuter = limit(outer.calculateOutput(position, ref), -512, 511);
+				double u =      limit(inner.calculateOutput(angle, uOuter), -512, 511);
                 double controlOutput = u;
 				try {
 					analogOut.setValue(controlOutput);
 				} catch (Exception e) {
 					System.out.println("Failed to write to analog output");
 				}
-				System.out.println("====================================== U:" + u);
 				outer.updateState(uOuter);
 				inner.updateState(u);
 
-                // Async tasks
-				this.asyncPostToWebMonitor(angle, position, 0, controlOutput);
-                this.asyncGetOfconfig();
-                this.asyncGetOfreference();
+                if (runCount%5 == 0)
+                    this.asyncPostToWebMonitor(angle, position, 0, controlOutput);
+                if (runCount%10 == 0)
+                    this.asyncSetOfreference();
+                if (runCount%50 == 0)
+                    this.asyncSetOfconfig();
 
                 // Always sets new parameters for both PID and PI
                 this.setParameters();
 
 
+
+                runCount++;
 				break;
 			}
 			default: {
@@ -252,7 +266,7 @@ public class Regul extends Thread {
 
 
     // Asynchronously set data to WebMonitor
-    public void asyncGetOfconfig(){
+    public void asyncSetOfconfig(){
         Runnable task = new Runnable() {
             @Override
             public void run() {
@@ -266,7 +280,7 @@ public class Regul extends Thread {
     }
 
     // Asynchronously sends data to WebMonitor
-    public void asyncGetOfreference(){
+    public void asyncSetOfreference(){
         Runnable task = new Runnable() {
             @Override
             public void run() {
