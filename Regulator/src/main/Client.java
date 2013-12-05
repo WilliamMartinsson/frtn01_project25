@@ -1,12 +1,11 @@
 package main;
 
+import pi2avr.TwoWaySerialComm;
 import regulatorsocket.RegulatorSocket;
 import regulatorsocket.SocketMonitor;
 import util.IOMonitor;
 
 import java.io.IOException;
-
-import pi2avr.TwoWaySerialComm;
 
 public class Client extends Thread {
 
