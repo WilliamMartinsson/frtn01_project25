@@ -8,7 +8,7 @@ import java.util.LinkedList;
 
 public class RegulatorSocket {
 
-	private int sendPeriod = 150;
+	private int sendPeriod = 50;
 	private DatagramSocket datagramSocket;
 	private SocketMonitor monitor;
 
@@ -60,7 +60,7 @@ public class RegulatorSocket {
 
 	/*
 	 * Server mode java RegulatorSocket -server 12345
-	 *
+	 * 
 	 * Client mode java RegulatorSocket -client 12345 olivetti.control.lth.se
 	 */
 	public static void main(String[] args) {
@@ -98,7 +98,9 @@ public class RegulatorSocket {
 						RegulatorSocket server = new RegulatorSocket(port);
 						server.open();
 					} catch (Exception e) {
-						System.out.println("Exception caught when trying to setup regulator server on port: " + port);
+						System.out
+								.println("Exception caught when trying to setup regulator server on port: "
+										+ port);
 						e.printStackTrace();
 					}
 				} catch (NumberFormatException e) {
@@ -120,7 +122,9 @@ public class RegulatorSocket {
 						client.open();
 						client.push();
 					} catch (Exception e) {
-                        System.out.println("Exception caught when trying to setup regulator client connection to server [" + param.getLast() + ":" + port + "]");
+						System.out
+								.println("Exception caught when trying to setup regulator client connection to server ["
+										+ param.getLast() + ":" + port + "]");
 						e.printStackTrace();
 					}
 				} catch (NumberFormatException e) {
@@ -146,7 +150,8 @@ public class RegulatorSocket {
 							packet.send(datagramSocket);
 						}
 					}
-					Packet returningPingPacket = monitor.getReturningPingPacket();
+					Packet returningPingPacket = monitor
+							.getReturningPingPacket();
 					if (returningPingPacket != null) {
 						returningPingPacket.send(datagramSocket);
 					}
@@ -170,13 +175,14 @@ public class RegulatorSocket {
 	}
 
 	private class Receiver extends Thread {
+		
 		public void run() {
-            Packet packet;
-            try {
+			Packet packet;
+			try {
 				while (!Thread.interrupted()) {
 					packet = Packet.recieve(datagramSocket);
 					monitor.setPacket(packet);
-                }
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
