@@ -4,6 +4,8 @@ import se.lth.control.realtime.Semaphore;
 import util.IOMonitor;
 import webmonitor.WebMonitor;
 
+import java.util.HashMap;
+
 public class Regul extends Thread {
 	public static final int OFF = 0;
 	public static final int BEAM = 1;
@@ -177,7 +179,14 @@ public class Regul extends Thread {
 				outer.updateState(uOuter);
 				inner.updateState(u);
 
-				this.asyncPostToWebMonitor(angle, position, 0, controlOutput); // Sends data to Web Monitoring service (async)
+                // Async tasks
+				this.asyncPostToWebMonitor(angle, position, 0, controlOutput);
+                this.asyncGetOfconfig();
+                this.asyncGetOfreference();
+
+                // Always sets new parameters for both PID and PI
+                this.setParameters();
+
 
 				break;
 			}
@@ -199,6 +208,35 @@ public class Regul extends Thread {
 		mutex.give();
 	}
 
+    private void setParameters() {
+        // WARNING:  If these values are **** then the process will be ****
+        HashMap<String, Double> PIconfig = webMonitor.getConfiguration(false);
+        PIParameters piParameters = new PIParameters();
+        piParameters.K    = PIconfig.get("k");
+        piParameters.Ti   = PIconfig.get("ti");
+        piParameters.Tr   = PIconfig.get("tr");
+        piParameters.Beta = PIconfig.get("beta");
+        piParameters.H    = PIconfig.get("h");
+        piParameters.integratorOn = false;
+
+        this.setInnerParameters(piParameters);
+
+        // WARNING:  If these values are **** then the process will be ****
+        HashMap<String, Double> PIDconfig = webMonitor.getConfiguration(true);
+        PIDParameters pidParameters = new PIDParameters();
+        pidParameters = new PIDParameters();
+        pidParameters.Beta = PIDconfig.get("beta");
+        pidParameters.H = PIDconfig.get("h");
+        pidParameters.integratorOn = false;
+        pidParameters.K = PIDconfig.get("k");
+        pidParameters.Ti = PIDconfig.get("ti");
+        pidParameters.Tr = PIDconfig.get("tr");
+        pidParameters.Td = PIDconfig.get("td");
+        pidParameters.N = PIDconfig.get("n");
+
+        this.setOuterParameters(pidParameters);
+    }
+
     // Asynchronously sends data to WebMonitor
     public void asyncPostToWebMonitor(final double angle, final double position, final double latency, final double controlOutput){
         Runnable task = new Runnable() {
@@ -210,6 +248,34 @@ public class Regul extends Thread {
             }
         };
         new Thread(task, "WebMonitorThread").start();
+    }
+
+
+    // Asynchronously set data to WebMonitor
+    public void asyncGetOfconfig(){
+        Runnable task = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    webMonitor.setConfiguration(true);
+                    webMonitor.setConfiguration(false);
+                } catch (Exception ex) { ex.printStackTrace(); }
+            }
+        };
+        new Thread(task, "WebMonitorThread1").start();
+    }
+
+    // Asynchronously sends data to WebMonitor
+    public void asyncGetOfreference(){
+        Runnable task = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    webMonitor.setReference();
+                } catch (Exception ex) { ex.printStackTrace(); }
+            }
+        };
+        new Thread(task, "WebMonitorThread2").start();
     }
 
 

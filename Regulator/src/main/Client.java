@@ -1,12 +1,10 @@
 package main;
 
-import pi2avr.TwoWaySerialComm;
 import regulator.PIDParameters;
 import regulator.PIParameters;
 import regulator.Regul;
-import regulatorsocket.SocketMonitor;
 import regulatorsocket.RegulatorSocket;
-import regulatorsocket.Util;
+import regulatorsocket.SocketMonitor;
 import util.IOMonitor;
 import webmonitor.WebMonitor;
 
@@ -29,44 +27,48 @@ public class Client {
 			e.printStackTrace();
 		}
 
-        long time = System.currentTimeMillis();
         WebMonitor webMonitor = new WebMonitor(Main.WEBMONITOR_HOST);
-        HashMap<String, Double> constants = webMonitor.getConfiguration();
-        Util.print("[GET] Constants: " + (System.currentTimeMillis() - time) + "ms");
-
 
 		Regul regul = new Regul(0, angle, pos, y, webMonitor);
 
+        webMonitor.setConfiguration(false);
+        HashMap<String, Double> PIconfig = webMonitor.getConfiguration(false);
+
         // WARNING:  If these values are **** then the process will be ****
-//        PIParameters piParameters = new PIParameters();
-//        piParameters.K    = constants.get("k");
-//        piParameters.Ti   = constants.get("ti");
-//        piParameters.Tr   = constants.get("tr");
-//        piParameters.Beta = constants.get("beta");
-//        piParameters.H    = constants.get("h");
-//        piParameters.integratorOn = false;
-//        regul.setInnerParameters(piParameters);
+        PIParameters piParameters = new PIParameters();
+        piParameters.K    = PIconfig.get("k");
+        piParameters.Ti   = PIconfig.get("ti");
+        piParameters.Tr   = PIconfig.get("tr");
+        piParameters.Beta = PIconfig.get("beta");
+        piParameters.H    = PIconfig.get("h");
+        piParameters.integratorOn = false;
+        regul.setInnerParameters(piParameters);
 
+        webMonitor.setConfiguration(true);
+        HashMap<String, Double> PIDconfig = webMonitor.getConfiguration(true);
+        // WARNING:  If these values are **** then the process will be ****
+        PIDParameters pidParameters = new PIDParameters();
+        pidParameters = new PIDParameters();
+        pidParameters.Beta = PIDconfig.get("beta");
+        pidParameters.H = PIDconfig.get("h");
+        pidParameters.integratorOn = false;
+        pidParameters.K = PIDconfig.get("k");
+        pidParameters.Ti = PIDconfig.get("ti");
+        pidParameters.Tr = PIDconfig.get("tr");
+        pidParameters.Td = PIDconfig.get("td");
+        pidParameters.N = PIDconfig.get("n");
+        regul.setOuterParameters(pidParameters);
 
-//        PIDParameters pidParameters = new PIDParameters();
-//        pidParameters = new PIDParameters();
-//        pidParameters.Beta = constants.get("beta");
-//        pidParameters.H = constants.get("h");
-//        pidParameters.integratorOn = false;
-//        pidParameters.K = constants.get("k");
-//        pidParameters.Ti = constants.get("ti");
-//        pidParameters.Tr = constants.get("tr");
-//        pidParameters.Td = constants.get("td");
-//        pidParameters.N = constants.get("n");
-//        regul.setOuterParameters(pidParameters);
+        webMonitor.setReference();
+        HashMap<String, String> mmmn =  webMonitor.getReference();
 
 		regul.setBALLMode();
 
 
-		TwoWaySerialComm comm = new TwoWaySerialComm(new String[] {}, angle,
-				pos, y,"/dev/ttyUSB0",57600,1024);
-		comm.start();
-		regul.start();
+//		TwoWaySerialComm comm = new TwoWaySerialComm(new String[] {}, angle,
+//				pos, y,"/dev/ttyUSB0",57600,1024);
+//		comm.start();
+//		regul.start();
 	}
 
 	public static void main(String[] args) {

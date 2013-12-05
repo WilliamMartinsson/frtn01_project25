@@ -14,6 +14,12 @@ public class WebMonitor {
     private static final String CHARSET = "UTF-8";
     private static final String SENSOR_OUTPUT_URI = "/sensor_outputs";
     private static final String PROCESS_CONSTANTS_URI = "/config";
+    private static final String REFERENCE_URI = "/reference";
+
+    private HashMap<String, Double> PIconfig;
+    private HashMap<String, Double> PIDconfig;
+
+    private HashMap<String, String> reference;
 
     /**
      * Creates a WebMonitor with a specified URL.
@@ -21,6 +27,9 @@ public class WebMonitor {
      */
     public WebMonitor(String url) {
         this.url = "http://" + url;
+        PIDconfig = new HashMap<String, Double>();
+        PIconfig = new HashMap<String, Double>();
+        reference = new HashMap<String, String>();
         System.setProperty("http.keepAlive", "false"); // Don't keep connections alive
     }
 
@@ -54,14 +63,37 @@ public class WebMonitor {
      * Fetches the configuration in JSON-format from the specified URL.
      * @return
      */
-    public HashMap<String, Double> getConfiguration() {
+    public void setConfiguration(boolean isPID) {
+        String pid = "?pid=false";
+        if (isPID){
+            pid = "?pid=true";
+        }
         try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(new URL(url + PROCESS_CONSTANTS_URI).openStream()));
+            BufferedReader in = new BufferedReader(new InputStreamReader(new URL(url + PROCESS_CONSTANTS_URI + pid).openStream()));
             String jsonString = WebMonitor.inputStreamToString(in);
-            return WebMonitor.toHashConfig(jsonString);
+            if (isPID){
+                PIDconfig = WebMonitor.toHashConfig(jsonString);
+            } else {
+                PIconfig = WebMonitor.toHashConfig(jsonString);
+            }
         } catch (IOException e) { e.printStackTrace(); }
+    }
 
-        return null;
+    public void setReference() {
+        try {
+            BufferedReader in = new BufferedReader(new InputStreamReader(new URL(url + REFERENCE_URI).openStream()));
+            String jsonString = WebMonitor.inputStreamToString(in);
+            reference = this.toHashReference(jsonString);
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
+
+    public HashMap<String, Double> getConfiguration(boolean isPID) {
+        return isPID ? PIDconfig : PIconfig;
+    }
+
+    public HashMap<String, String> getReference() {
+        return reference;
     }
 
 
@@ -94,6 +126,18 @@ public class WebMonitor {
             config.put("h", json.getDouble("h_constant"));
         } catch (JSONException e) { e.printStackTrace(); }
         return config;
+    }
+
+    private HashMap<String, String> toHashReference(String jsonString) {
+        try {
+            JSONObject json = new JSONObject(jsonString);
+            String man = String.valueOf(json.getBoolean("manual_mode"));
+            reference.put("manual", man);
+            String ref = String.valueOf(json.getDouble("reference_value"));
+            reference.put("reference", ref);
+        } catch (JSONException e) { e.printStackTrace(); }
+
+        return reference;
     }
 
 }
