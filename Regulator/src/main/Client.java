@@ -25,6 +25,8 @@ public class Client {
 
 
 		Regul regul = new Regul(0, angle, pos, y, webMonitor);
+
+        // WARNING:  If these values are **** then the process will be ****
         PIParameters piParameters = new PIParameters();
         piParameters.K    = constants.get("k");
         piParameters.Ti   = constants.get("ti");

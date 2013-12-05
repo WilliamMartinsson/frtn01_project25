@@ -194,7 +194,7 @@ public class Regul extends Thread {
 				inner.updateState(u);
 				this.sendDataToOpCom(ref, position, u);
 
-                this.asyncPostToWebMonitor(angle, position, 0, controlOutput); // Sends data to Web Monitoring service
+                this.asyncPostToWebMonitor(angle, position, 0, controlOutput); // Sends data to Web Monitoring service (async)
 
 				break;
 			}
