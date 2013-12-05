@@ -1,29 +1,27 @@
 package main;
 
-import pi2avr.TwoWaySerialComm;
-import regulator.PIDParameters;
-import regulator.PIParameters;
-import regulator.Regul;
-import regulatorsocket.SocketMonitor;
 import regulatorsocket.RegulatorSocket;
-import regulatorsocket.Util;
+import regulatorsocket.SocketMonitor;
 import util.IOMonitor;
-import webmonitor.WebMonitor;
 
 import java.io.IOException;
-import java.util.HashMap;
+
+import pi2avr.TwoWaySerialComm;
 
 public class Client extends Thread {
 
 	private SocketMonitor socketMonitor = null;
-	private WebMonitor webMonitor = null;
-	Regul regul = null;
-	TwoWaySerialComm comm = null;
+	private IOMonitor angle = null;
+	private IOMonitor pos = null;
+	private IOMonitor y = null;
+
+	private RegulatorSocket rs = null;
+	private TwoWaySerialComm comm = null;
 
 	public Client() {
-		IOMonitor angle = IOMonitor.getIO(IOMonitor.ANGLE);
-		IOMonitor pos = IOMonitor.getIO(IOMonitor.POSITION);
-		IOMonitor y = IOMonitor.getIO(IOMonitor.Y);
+		angle = IOMonitor.getIO(IOMonitor.ANGLE);
+		pos = IOMonitor.getIO(IOMonitor.POSITION);
+		y = IOMonitor.getIO(IOMonitor.Y);
 
 		try {
 			RegulatorSocket rs = new RegulatorSocket(Main.REGULATOR_PORT,
@@ -34,47 +32,26 @@ public class Client extends Thread {
 			e.printStackTrace();
 		}
 
-		long time = System.currentTimeMillis();
-		webMonitor = new WebMonitor(Main.WEBMONITOR_HOST);
-		HashMap<String, Double> constants = webMonitor.getConfiguration();
-		Util.print("[GET] Constants: " + (System.currentTimeMillis() - time)
-				+ "ms");
-
-		regul = new Regul(0, angle, pos, y, webMonitor);
-
-		// WARNING: If these values are **** then the process will be ****
-		// PIParameters piParameters = new PIParameters();
-		// piParameters.K = constants.get("k");
-		// piParameters.Ti = constants.get("ti");
-		// piParameters.Tr = constants.get("tr");
-		// piParameters.Beta = constants.get("beta");
-		// piParameters.H = constants.get("h");
-		// piParameters.integratorOn = false;
-		// regul.setInnerParameters(piParameters);
-
-		// PIDParameters pidParameters = new PIDParameters();
-		// pidParameters = new PIDParameters();
-		// pidParameters.Beta = constants.get("beta");
-		// pidParameters.H = constants.get("h");
-		// pidParameters.integratorOn = false;
-		// pidParameters.K = constants.get("k");
-		// pidParameters.Ti = constants.get("ti");
-		// pidParameters.Tr = constants.get("tr");
-		// pidParameters.Td = constants.get("td");
-		// pidParameters.N = constants.get("n");
-		// regul.setOuterParameters(pidParameters);
-
-		regul.setBALLMode();
-
 		comm = new TwoWaySerialComm(new String[] {}, angle, pos, y,
 				"/dev/ttyUSB0", 57600, 1024);
+	}
+	
+	public void start(){
+		rs.open();
 		comm.start();
-		regul.start();
+		super.start();
 	}
 
 	public void run() {
-		while (!Thread.interrupted()) {
-			
+		try {
+			while (!Thread.interrupted()) {
+				socketMonitor.setSendData1(angle.getValue());
+				socketMonitor.setSendData2(pos.getValue());
+				y.setValue(socketMonitor.getReceiveData1());
+				Thread.sleep(Main.MAIN_PERIOD);
+			}
+		} catch (InterruptedException e) {
+			System.out.println("Client was force closed!");
 		}
 	}
 
