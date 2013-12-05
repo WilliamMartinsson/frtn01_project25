@@ -24,9 +24,6 @@ public class Client {
         Util.print("[GET] Constants: " + (System.currentTimeMillis() - time) + "ms");
 
 
-//		y.setValue(-10);
-
-
 		Regul regul = new Regul(0, angle, pos, y, webMonitor);
         PIParameters piParameters = new PIParameters();
         piParameters.K    = constants.get("k");

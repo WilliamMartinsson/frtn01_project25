@@ -66,7 +66,7 @@ public class WebMonitor {
 
 
     private static byte[] postParams(double angle, double position, double latency, double controlOutput) {
-        return String.format("angle=%f&position=%f&latency=%f&control_output=%f",  angle, position, latency, controlOutput).getBytes();
+        return String.format("angle=%f&position=%f&latency=%f&output=%f",  angle, position, latency, controlOutput).getBytes();
     }
 
 
