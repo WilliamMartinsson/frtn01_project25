@@ -14,24 +14,29 @@ public class Packet {
 
     private static final byte PACKET_IDENTIFIER = 0;
     private static final byte TIMESTAMP = 1;
-    private static final byte PAYLOAD = 9;
+    private static final byte DATA1 = 9;
+    private static final byte DATA2 = 17;
+    private static final byte PING_DATA = 9;
+    private static final byte PADDING = 17;
 
-    private static final int PACKET_SIZE = 17;
+    private static final int PACKET_SIZE = 25;
 
 	private InetAddress address;
 	private int port;
 	private boolean ping;
 	private long timestamp;
 	private long pingtime;
-	private double signal;
+	private double data1;
+	private double data2;
 	private boolean returningping = false;
 
-	public Packet(InetAddress address, int port, long timestamp, double signal) {
+	public Packet(InetAddress address, int port, long timestamp, double data1, double data2) {
 		this.address = address;
 		this.port = port;
 		this.ping = false;
 		this.timestamp = timestamp;
-		this.signal = signal;
+		this.data1 = data1;
+		this.data2 = data2;
 	}
 
 	public Packet(InetAddress address, int port, long timestamp, long pingtime) {
@@ -54,8 +59,12 @@ public class Packet {
 		return port;
 	}
 
-	public double getPayload() {
-		return signal;
+	public double getData1() {
+		return data1;
+	}
+
+	public double getData2() {
+		return data2;
 	}
 
 	public long getPing() {
@@ -83,11 +92,13 @@ public class Packet {
 				buffer.put(OUTGOING_PING_PACKET);
 			}
 			buffer.putLong(TIMESTAMP, this.timestamp);
-			buffer.putLong(PAYLOAD,   this.pingtime);
+			buffer.putLong(PING_DATA, this.pingtime);
+			buffer.putLong(PADDING,   this.pingtime);
 		} else {
 			buffer.put(DATA_PACKET);
 			buffer.putLong(TIMESTAMP, this.timestamp);
-			buffer.putDouble(PAYLOAD, this.signal);
+			buffer.putDouble(DATA1,   this.data1);
+			buffer.putDouble(DATA2,   this.data2);
 		}
         byte[] sendBuffer = buffer.array();
 		return new DatagramPacket(sendBuffer, sendBuffer.length, this.address, this.port);
@@ -96,9 +107,9 @@ public class Packet {
 	public static Packet fromDatagramPacket(DatagramPacket dp) {
 		ByteBuffer buffer = ByteBuffer.wrap(dp.getData());
 		if (buffer.get(PACKET_IDENTIFIER) == DATA_PACKET) {
-			return new Packet(dp.getAddress(), dp.getPort(), buffer.getLong(TIMESTAMP), buffer.getDouble(PAYLOAD));
+			return new Packet(dp.getAddress(), dp.getPort(), buffer.getLong(TIMESTAMP), buffer.getDouble(DATA1), buffer.getDouble(DATA2));
 		} else {
-			Packet pingPacket = new Packet(dp.getAddress(), dp.getPort(), buffer.getLong(TIMESTAMP), buffer.getLong(PAYLOAD));
+			Packet pingPacket = new Packet(dp.getAddress(), dp.getPort(), buffer.getLong(TIMESTAMP), buffer.getLong(PING_DATA));
 			if (buffer.get(PACKET_IDENTIFIER) == RETURNING_PING_PACKET) {
 				pingPacket.setReturningPing();
 			}
