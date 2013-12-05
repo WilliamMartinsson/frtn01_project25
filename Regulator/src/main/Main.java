@@ -17,13 +17,14 @@ public class Main {
 	public static final int REGULATOR_PORT = 12345;
 
 	public static void setUpCloud(int port) throws IOException {
-		RegulatorSocket server = new RegulatorSocket(port);
-		server.open();
+		//RegulatorSocket server = new RegulatorSocket(port);
+		//server.open();
+		new Server().start();
 	}
 
 	public static void setUpPI(int port, String host) throws IOException {
 		// OBS! Använder inte indata!!!!
-		new Client();
+		new Client().start();
 		// client.push();
 	}
 

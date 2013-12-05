@@ -24,7 +24,7 @@ public class Client extends Thread {
 		y = IOMonitor.getIO(IOMonitor.Y);
 
 		try {
-			RegulatorSocket rs = new RegulatorSocket(Main.REGULATOR_PORT,
+			rs = new RegulatorSocket(Main.REGULATOR_PORT,
 					Main.REGULATOR_HOST);
 			socketMonitor = rs.getMonitor();
 

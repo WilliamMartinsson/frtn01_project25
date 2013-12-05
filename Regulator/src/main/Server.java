@@ -28,15 +28,15 @@ public class Server extends Thread {
 		y = IOMonitor.getIO(IOMonitor.Y);
 
 		try {
-			RegulatorSocket rs = new RegulatorSocket(Main.REGULATOR_PORT);
+			rs = new RegulatorSocket(Main.REGULATOR_PORT);
 			socketMonitor = rs.getMonitor();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
-		WebMonitor webMonitor = new WebMonitor(Main.WEBMONITOR_HOST);
+		webMonitor = new WebMonitor(Main.WEBMONITOR_HOST);
 
-		Regul regul = new Regul(0, angle, pos, y, webMonitor);
+		regul = new Regul(0, angle, pos, y, webMonitor);
 
 		webMonitor.setConfiguration(false);
 		HashMap<String, Double> PIconfig = webMonitor.getConfiguration(false);
