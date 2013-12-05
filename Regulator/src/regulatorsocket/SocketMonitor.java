@@ -32,8 +32,9 @@ public abstract class SocketMonitor {
 	}
 
 	public synchronized Packet getPacket() {
-		if (address == null || port < 0)
+		if (address == null || port < 0){
 			return null;
+		}
 		long time = System.currentTimeMillis();
 		// Util.print("Sending  (Monitor): " + time + " " + transferData);
 		return new Packet(address, port, time, sendData1, sendData2);

@@ -67,7 +67,6 @@ public class Server extends Thread {
 		regul.setOuterParameters(pidParameters);
 
 		webMonitor.setReference();
-		HashMap<String, String> mmmn = webMonitor.getReference();
 
 		regul = new Regul(0, angle, pos, y, webMonitor);
 
@@ -85,6 +84,10 @@ public class Server extends Thread {
 			int i = 0;
 			while (!Thread.interrupted()) {
 				if (i++ == Main.WEB_RATE) {
+					System.out.println("Sending to Webserver ("
+							+ socketMonitor.getReceiveData1() + ", "
+							+ socketMonitor.getReceiveData2() + ", "
+							+ y.getValue() + ")");
 					webMonitor.send(angle.getValue(), pos.getValue(),
 							socketMonitor.getPing(), y.getValue());
 					i = 0;

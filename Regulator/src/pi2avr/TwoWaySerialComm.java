@@ -117,6 +117,7 @@ public class TwoWaySerialComm {
 				System.out.println("[START] Serial writer");
 				(new Thread(new SerialReader(in, out, bufferSize, this)))
 						.start();
+				System.out.println("[DEBUG]: Beam has started!");
 				// (new Thread(new SerialWriter(out, monitor))).start();
 
 			} else {

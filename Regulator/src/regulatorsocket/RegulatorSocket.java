@@ -3,6 +3,9 @@ package regulatorsocket;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -17,6 +20,12 @@ public class RegulatorSocket {
 		Util.print("Starting client");
 		Util.print("Connecting to: " + host + ":" + port);
 
+		/*
+		 * NetworkInterface nif = NetworkInterface.getByName("wwan0");
+		 * Enumeration<InetAddress> nifAddresses = nif.getInetAddresses();
+		 * datagramSocket = new DatagramSocket(new InetSocketAddress(
+		 * nifAddresses.nextElement(), 23456));
+		 */
 		datagramSocket = new DatagramSocket();
 	}
 
@@ -96,7 +105,7 @@ public class RegulatorSocket {
 	}
 
 	private class Receiver extends Thread {
-		
+
 		public void run() {
 			Packet packet;
 			try {
@@ -128,12 +137,6 @@ public class RegulatorSocket {
 			address = packet.getAddress();
 			port = packet.getPort();
 			super.setPacket(packet);
-		}
-
-		public synchronized Packet getPacket() {
-			sendData1 = receiveData1;
-			sendData2 = receiveData2;
-			return super.getPacket();
 		}
 	}
 
