@@ -1,7 +1,5 @@
 package main;
 
-import webmonitor.WebMonitor;
-
 public class Main {
 
 	public static final String WEBMONITOR_HOST = "cloudregulator.herokuapp.com";

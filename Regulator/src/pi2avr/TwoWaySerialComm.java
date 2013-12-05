@@ -200,6 +200,12 @@ public class TwoWaySerialComm {
 						channel = bb.get(CHANNEL);
 						data = bb.getShort(DATA);
 
+//                        String channelString = "";
+//                        if (channel == CHANEL_0)
+//                            channelString = "What";
+//                        else if (channel == CHANEL_1)
+//                            channelString = "Whatever";
+
 						System.out.println("[RECEIVE][" + channel + "]: "
 								+ data);
 						IOMonitor.getIO(channel).setValue(data);
