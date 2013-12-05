@@ -107,14 +107,31 @@ public class Packet {
 	}
 
 	public void send(DatagramSocket ds) throws IOException {
+
 		ds.send(this.toDatagramPacket());
 	}
 
 	public static Packet recieve(DatagramSocket ds) throws IOException {
+		long s1 = 0;
+		long t1 = 0;
+		long s2 = 0;
+		long t2 = 0;
+		long s3 = 0;
+		long t3 = 0;
+		
+		s1 = System.currentTimeMillis();
 		byte[] dataArray = new byte[PACKET_SIZE];
 		DatagramPacket packet = new DatagramPacket(dataArray, dataArray.length);
+		t1 = System.currentTimeMillis();
+		s2 = System.currentTimeMillis();
 		ds.receive(packet);
-		return Packet.fromDatagramPacket(packet);
+		t2 = System.currentTimeMillis();
+		s3 = System.currentTimeMillis();
+		Packet pkt = Packet.fromDatagramPacket(packet);
+		t3 = System.currentTimeMillis();
+		System.out.println("[Returning ping packet time]: ("
+				+ (t1 - s1) + ", " + (t2 - s2) + ", " + (t3 - s3) + ")");
+		return pkt;
 	}
 
 }

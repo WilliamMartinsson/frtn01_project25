@@ -13,6 +13,8 @@ import java.util.HashMap;
 
 public class Client {
 	
+	private SocketMonitor socketMonitor;
+	
 	public Client(){
 		IOMonitor angle = IOMonitor.getIO(IOMonitor.ANGLE);
 		IOMonitor pos = IOMonitor.getIO(IOMonitor.POSITION);
