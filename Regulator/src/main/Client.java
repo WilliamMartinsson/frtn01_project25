@@ -26,8 +26,14 @@ public class Client extends Thread {
 		y = IOMonitor.getIO(IOMonitor.Y);
 
 		try {
-			
-			rs = new RegulatorSocket(Main.REGULATOR_PORT, Main.REGULATOR_HOST);
+
+			// UDP
+			 rs = new RegulatorSocket(Main.REGULATOR_PORT,
+			 Main.REGULATOR_HOST,
+			 true);
+			// TCP
+//			rs = new RegulatorSocket(Main.REGULATOR_PORT, Main.REGULATOR_HOST,
+//					false);
 			socketMonitor = rs.getMonitor();
 
 		} catch (IOException e) {
@@ -39,9 +45,13 @@ public class Client extends Thread {
 	}
 
 	public void start() {
-		rs.open();
-		comm.start();
-		super.start();
+		try {
+			rs.open();
+			comm.start();
+			super.start();
+		} catch (IOException e) {
+			System.out.println("[FAILED] Unable to estabilish connection");
+		}
 	}
 
 	public void run() {
@@ -49,9 +59,11 @@ public class Client extends Thread {
 			int i = 0;
 			while (!Thread.interrupted()) {
 				if (i++ == Main.WEB_RATE) {
-					System.out.println("At leat it does something! ("
-							+ angle.getValue() + ", " + pos.getValue() + ", "
-							+ socketMonitor.getReceiveData1() + ")");
+					/*
+					 * System.out.println("At leat it does something! (" +
+					 * angle.getValue() + ", " + pos.getValue() + ", " +
+					 * socketMonitor.getReceiveData1() + ")");
+					 */
 					i = 0;
 				}
 				socketMonitor.setSendData1(angle.getValue());

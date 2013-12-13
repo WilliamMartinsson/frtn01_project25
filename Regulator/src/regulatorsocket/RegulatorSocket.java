@@ -12,10 +12,12 @@ import java.util.LinkedList;
 public class RegulatorSocket {
 
 	private int sendPeriod = 50;
-	private DatagramSocket datagramSocket;
+	ConnectionSocket socket;
+	// private DatagramSocket datagramSocket;
 	private SocketMonitor monitor;
 
-	public RegulatorSocket(int port, String host) throws IOException {
+	public RegulatorSocket(int port, String host, boolean udp)
+			throws IOException {
 		monitor = new Client(InetAddress.getByName(host), port);
 		Util.print("Starting client");
 		Util.print("Connecting to: " + host + ":" + port);
@@ -26,15 +28,25 @@ public class RegulatorSocket {
 		 * datagramSocket = new DatagramSocket(new InetSocketAddress(
 		 * nifAddresses.nextElement(), 23456));
 		 */
-		datagramSocket = new DatagramSocket();
+		if (udp) {
+			socket = new UDPSocket();
+		} else {
+			socket = new TCPSocket(host, port);
+		}
+		// datagramSocket = new DatagramSocket();
 	}
 
-	public RegulatorSocket(int port) throws IOException {
+	public RegulatorSocket(int port, boolean udp) throws IOException {
 		monitor = new Server();
 		Util.print("Starting server");
 		Util.print("Open for connections to port " + port);
 
-		datagramSocket = new DatagramSocket(port);
+		if (udp) {
+			socket = new UDPSocket(port);
+		} else {
+			socket = new TCPSocket(port);
+		}
+		// datagramSocket = new DatagramSocket(port);
 	}
 
 	// DUBUG
@@ -45,7 +57,8 @@ public class RegulatorSocket {
 		}
 	}
 
-	public void open() {
+	public void open() throws IOException {
+		socket.setReady();
 		openSender();
 		openReceiver();
 	}
@@ -77,19 +90,22 @@ public class RegulatorSocket {
 					if (i++ % 10 == 0) {
 						Packet packet = monitor.getPingPacket();
 						if (packet != null) {
-							packet.send(datagramSocket);
+							socket.send(packet);
+							// packet.send(datagramSocket);
 						}
 					}
 					Packet returningPingPacket = monitor
 							.getReturningPingPacket();
 					if (returningPingPacket != null) {
-						returningPingPacket.send(datagramSocket);
+						socket.send(returningPingPacket);
+						// returningPingPacket.send(datagramSocket);
 					}
 					// Send packet
 
 					Packet packet = monitor.getPacket();
 					if (packet != null) {
-						packet.send(datagramSocket);
+						socket.send(packet);
+						// packet.send(datagramSocket);
 					}
 
 					// Sleep
@@ -110,7 +126,8 @@ public class RegulatorSocket {
 			Packet packet;
 			try {
 				while (!Thread.interrupted()) {
-					packet = Packet.recieve(datagramSocket);
+					packet = socket.receive(Packet.PACKET_SIZE);
+					// packet = Packet.recieve(datagramSocket);
 					monitor.setPacket(packet);
 				}
 			} catch (IOException e) {

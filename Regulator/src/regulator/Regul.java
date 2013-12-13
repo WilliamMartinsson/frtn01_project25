@@ -8,7 +8,6 @@ import java.util.HashMap;
 
 public class Regul extends Thread {
 	public static final int OFF = 0;
-	public static final int BEAM = 1;
 	public static final int BALL = 2;
 
 	private PI inner = new PI("PI");
@@ -18,10 +17,9 @@ public class Regul extends Thread {
 	private IOMonitor analogInPosition;
 	private IOMonitor analogOut;
 
-    private long runCount;
+	private long runCount;
 
 	private ReferenceGenerator referenceGenerator;
-	// private OpComProxy opcom;
 
 	private int priority;
 	private boolean WeShouldRun = true;
@@ -30,7 +28,7 @@ public class Regul extends Thread {
 
 	private ModeMonitor modeMon;
 
-    private WebMonitor webMonitor;
+	private WebMonitor webMonitor;
 
 	// Inner monitor class
 	class ModeMonitor {
@@ -49,22 +47,19 @@ public class Regul extends Thread {
 
 	public Regul(int pri, IOMonitor angle, IOMonitor pos, IOMonitor ref, WebMonitor webMonitor) {
 		this.priority = pri;
-        this.mutex = new Semaphore(1);
-        this.analogInAngle = angle;
-		// analogInAngle = new AnalogIn(0);
-        this.analogInPosition = pos;
-		// analogInPosition = new AnalogIn(1);
-        this.analogOut = ref;
-		// analogOut = new AnalogOut(0);
-        this.modeMon = new ModeMonitor();
-        this.webMonitor = webMonitor;
-        this.setRefGen(new ReferenceGenerator(1));
-        this.runCount = 0;
+		this.mutex = new Semaphore(1);
+		this.analogInAngle = angle;
+		this.analogInPosition = pos;
+		this.analogOut = ref;
+		this.modeMon = new ModeMonitor();
+		this.webMonitor = webMonitor;
+		this.setRefGen(new ReferenceGenerator(1));
+		this.runCount = 0;
 	}
 
 	public void setRefGen(ReferenceGenerator referenceGenerator) {
 		this.referenceGenerator = referenceGenerator;
-        this.referenceGenerator.start();
+		this.referenceGenerator.start();
 	}
 
 	public synchronized void setInnerParameters(PIParameters p) {
@@ -85,11 +80,6 @@ public class Regul extends Thread {
 
 	public void setOFFMode() {
 		modeMon.setMode(OFF);
-
-	}
-
-	public void setBEAMMode() {
-		modeMon.setMode(BEAM);
 
 	}
 
@@ -130,78 +120,75 @@ public class Regul extends Thread {
 		while (WeShouldRun) {
 			switch (modeMon.getMode()) {
 			case OFF: {
-				inner.reset();
-				outer.reset();
-                this.asyncPostToWebMonitor(0, 0, 0, 0); // Sends data to Web Monitoring service (async)
-				try {
-					angle = analogInAngle.getValue();
-					position = analogInPosition.getValue();
-				} catch (Exception e) {
-					System.out.println("Failed to write to analog output");
-				}
-				break;
-			}
-			case BEAM: {
-				// double yref = referenceGenerator.getRef();
-				double yref = 0.0;
-				double yAnalog = 0;
-				try {
-					yAnalog = analogInAngle.getValue();
-				} catch (Exception e) {
-					System.out.println("Failed to get angle value");
-				}
-				double u = limit(inner.calculateOutput(yAnalog, yref), -512, 511);
-                this.asyncPostToWebMonitor(yAnalog, 0, 0, u); // Sends data to Web Monitoring service (async)
-				inner.updateState(u);
-				try {
-					analogOut.setValue(u);
-				} catch (Exception e) {
-					System.out.println("Failed to write to analog output");
-				}
+				angle = analogInAngle.getValue();
+				position = analogInPosition.getValue();
+				
+				referenceGenerator.setMode(webMonitor.getRefMode());
+				double webRef = webMonitor.getRefValue();
+
+				referenceGenerator.setAmplitude(webRef);
+				double ref = referenceGenerator.getRef();
+				double uOuter = limit(outer.calculateOutput(ref, position), -512, 511);
+				double u =      limit(inner.calculateOutput(angle, uOuter), -512, 511);
+
+
+				System.out.println("[REF]: " + ref);
+				System.out.println("[uOU]: " + uOuter );
+				System.out.println("[uuu]: " + u);
+				System.out.println("[POS]: " + position );
+				System.out.println("[ANG]: " + angle );
+				
+				if (runCount%5 == 0)
+					this.asyncPostToWebMonitor(angle, position, 0, u);
+				if (runCount%10 == 0)
+					this.asyncSetOfreference();
+				if (runCount%50 == 0)
+					this.asyncSetOfconfig();
+
+				runCount++;	
+
+				angle = analogInAngle.getValue() ;
+				position = analogInPosition.getValue();
+
 				break;
 			}
 			case BALL: {
-				try {
-					angle = analogInAngle.getValue();
-					position = analogInPosition.getValue();
-				} catch (Exception e) {
-					System.out
-							.println("Failed to get analog output: angle or position");
-				}
+				angle = analogInAngle.getValue() + 30;
+				position = analogInPosition.getValue() + 32;
 
-                referenceGenerator.setMode(webMonitor.getRefMode());
-                double webRef = webMonitor.getRefValue();
-//                System.out.println("WEBREF: " + webRef);
-                referenceGenerator.setAmplitude(webRef);
+				referenceGenerator.setMode(webMonitor.getRefMode());
+				double webRef = webMonitor.getRefValue();
+				referenceGenerator.setAmplitude(webRef);
 
-                double ref = referenceGenerator.getRef();
-//                System.out.println("REF:    " + ref);
+				double ref = referenceGenerator.getRef();
 
 
-                double uOuter = limit(outer.calculateOutput(position, ref), -512, 511);
+				double uOuter = limit(outer.calculateOutput(ref, position), -512, 511);
 				double u =      limit(inner.calculateOutput(angle, uOuter), -512, 511);
-                double controlOutput = u;
-				try {
-					analogOut.setValue(controlOutput);
-				} catch (Exception e) {
-					System.out.println("Failed to write to analog output");
-				}
-				outer.updateState(uOuter);
-				inner.updateState(u);
+	
+				
+//				System.out.println("[REF]: " + ref);
+//				System.out.println("[uOU]: " + uOuter );
+//				System.out.println("[uuu]: " + u);
+//				System.out.println("[POS]: " + position );
+//				System.out.println("[ANG]: " + angle );
 
-                if (runCount%5 == 0)
-                    this.asyncPostToWebMonitor(angle, position, 0, controlOutput);
-                if (runCount%10 == 0)
-                    this.asyncSetOfreference();
-                if (runCount%50 == 0)
-                    this.asyncSetOfconfig();
+				analogOut.setValue(u); // Sends to process
 
-                // Always sets new parameters for both PID and PI
-                this.setParameters();
+				outer.updateState(uOuter); // Update outer state (PID)
+				inner.updateState(u); // Update inner state (PI)
 
+				if (runCount%5 == 0)
+					this.asyncPostToWebMonitor(angle, position, 0, u);
+				if (runCount%10 == 0)
+					this.asyncSetOfreference();
+				if (runCount%50 == 0)
+					this.asyncSetOfconfig();
 
+				// Always sets new parameters for both PID and PI
+				this.setParameters();
 
-                runCount++;
+				runCount++;
 				break;
 			}
 			default: {
@@ -222,75 +209,83 @@ public class Regul extends Thread {
 		mutex.give();
 	}
 
-    private void setParameters() {
-        // WARNING:  If these values are **** then the process will be ****
-        HashMap<String, Double> PIconfig = webMonitor.getConfiguration(false);
-        PIParameters piParameters = new PIParameters();
-        piParameters.K    = PIconfig.get("k");
-        piParameters.Ti   = PIconfig.get("ti");
-        piParameters.Tr   = PIconfig.get("tr");
-        piParameters.Beta = PIconfig.get("beta");
-        piParameters.H    = PIconfig.get("h");
-        piParameters.integratorOn = false;
+	private void setParameters() {
+		// WARNING:  If these values are **** then the process will be ****
+		HashMap<String, Double> PIconfig = webMonitor.getConfiguration(false);
+		PIParameters piParameters = new PIParameters();
+		piParameters.K    = PIconfig.get("k");
+		piParameters.Ti   = PIconfig.get("ti");
+		piParameters.Tr   = PIconfig.get("tr");
+		piParameters.Beta = PIconfig.get("beta");
+		piParameters.H    = PIconfig.get("h");
+		if(PIconfig.get("integrator") == 1.0){
+			piParameters.integratorOn = true;
+		}else{
+			piParameters.integratorOn = false;
+		}
 
-        this.setInnerParameters(piParameters);
+		this.setInnerParameters(piParameters);
 
-        // WARNING:  If these values are **** then the process will be ****
-        HashMap<String, Double> PIDconfig = webMonitor.getConfiguration(true);
-        PIDParameters pidParameters = new PIDParameters();
-        pidParameters = new PIDParameters();
-        pidParameters.Beta = PIDconfig.get("beta");
-        pidParameters.H = PIDconfig.get("h");
-        pidParameters.integratorOn = false;
-        pidParameters.K = PIDconfig.get("k");
-        pidParameters.Ti = PIDconfig.get("ti");
-        pidParameters.Tr = PIDconfig.get("tr");
-        pidParameters.Td = PIDconfig.get("td");
-        pidParameters.N = PIDconfig.get("n");
+		// WARNING:  If these values are **** then the process will be ****
+		HashMap<String, Double> PIDconfig = webMonitor.getConfiguration(true);
+		PIDParameters pidParameters = new PIDParameters();
+		pidParameters = new PIDParameters();
+		pidParameters.Beta = PIDconfig.get("beta");
+		pidParameters.H = PIDconfig.get("h");
+		if(PIDconfig.get("integrator") == 1.0){
+			pidParameters.integratorOn = true;
+		}else{
+			pidParameters.integratorOn = false;
+		}
+		pidParameters.K = PIDconfig.get("k");
+		pidParameters.Ti = PIDconfig.get("ti");
+		pidParameters.Tr = PIDconfig.get("tr");
+		pidParameters.Td = PIDconfig.get("td");
+		pidParameters.N = PIDconfig.get("n");
 
-        this.setOuterParameters(pidParameters);
-    }
+		this.setOuterParameters(pidParameters);
+	}
 
-    // Asynchronously sends data to WebMonitor
-    public void asyncPostToWebMonitor(final double angle, final double position, final double latency, final double controlOutput){
-        Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    webMonitor.send(angle, position, latency, controlOutput);
-                } catch (Exception ex) { ex.printStackTrace(); }
-            }
-        };
-        new Thread(task, "WebMonitorThread").start();
-    }
+	// Asynchronously sends data to WebMonitor
+	public void asyncPostToWebMonitor(final double angle, final double position, final double latency, final double controlOutput){
+		Runnable task = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					webMonitor.send(angle, position, latency, controlOutput);
+				} catch (Exception ex) { ex.printStackTrace(); }
+			}
+		};
+		new Thread(task, "WebMonitorThread").start();
+	}
 
 
-    // Asynchronously set data to WebMonitor
-    public void asyncSetOfconfig(){
-        Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    webMonitor.setConfiguration(true);
-                    webMonitor.setConfiguration(false);
-                } catch (Exception ex) { ex.printStackTrace(); }
-            }
-        };
-        new Thread(task, "WebMonitorThread1").start();
-    }
+	// Asynchronously set data to WebMonitor
+	public void asyncSetOfconfig(){
+		Runnable task = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					webMonitor.setConfiguration(true);
+					webMonitor.setConfiguration(false);
+				} catch (Exception ex) { ex.printStackTrace(); }
+			}
+		};
+		new Thread(task, "WebMonitorThread1").start();
+	}
 
-    // Asynchronously sends data to WebMonitor
-    public void asyncSetOfreference(){
-        Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    webMonitor.setReference();
-                } catch (Exception ex) { ex.printStackTrace(); }
-            }
-        };
-        new Thread(task, "WebMonitorThread2").start();
-    }
+	// Asynchronously sends data to WebMonitor
+	public void asyncSetOfreference(){
+		Runnable task = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					webMonitor.setReference();
+				} catch (Exception ex) { ex.printStackTrace(); }
+			}
+		};
+		new Thread(task, "WebMonitorThread2").start();
+	}
 
 
 }

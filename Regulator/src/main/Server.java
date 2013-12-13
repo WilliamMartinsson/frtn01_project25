@@ -28,7 +28,10 @@ public class Server extends Thread {
 		y = IOMonitor.getIO(IOMonitor.Y);
 
 		try {
-			rs = new RegulatorSocket(Main.REGULATOR_PORT);
+			// UDP
+			 rs = new RegulatorSocket(Main.REGULATOR_PORT, true);
+			// TCP
+//			rs = new RegulatorSocket(Main.REGULATOR_PORT, false);
 			socketMonitor = rs.getMonitor();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -69,14 +72,18 @@ public class Server extends Thread {
 		webMonitor.setReference();
 
 		regul = new Regul(0, angle, pos, y, webMonitor);
-
+		//regul.setOFFMode();
 		regul.setBALLMode();
 	}
 
 	public void start() {
-		rs.open();
-		regul.start();
-		super.start();
+		try {
+			rs.open();
+			regul.start();
+			super.start();
+		} catch (IOException e) {
+			System.out.println("[FAILED] Unable to estabilish connection");
+		}
 	}
 
 	public void run() {
@@ -84,10 +91,10 @@ public class Server extends Thread {
 			int i = 0;
 			while (!Thread.interrupted()) {
 				if (i++ == Main.WEB_RATE) {
-					System.out.println("Sending to Webserver ("
-							+ socketMonitor.getReceiveData1() + ", "
-							+ socketMonitor.getReceiveData2() + ", "
-							+ y.getValue() + ")");
+					// System.out.println("Sending to Webserver ("
+					// + socketMonitor.getReceiveData1() + ", "
+					// + socketMonitor.getReceiveData2() + ", "
+					// + y.getValue() + ")");
 					webMonitor.send(angle.getValue(), pos.getValue(),
 							socketMonitor.getPing(), y.getValue());
 					i = 0;

@@ -132,6 +132,11 @@ public class WebMonitor {
             config.put("n", json.getDouble("n_constant"));
             config.put("beta", json.getDouble("beta_constant"));
             config.put("h", json.getDouble("h_constant"));
+            if(json.getBoolean("integrator_on")){
+            	config.put("integrator", 1.0 );
+            }else{
+            	config.put("integrator", 0.0 );
+            }
         } catch (JSONException e) { e.printStackTrace(); }
         return config;
     }

@@ -1,14 +1,13 @@
 package regulator;
 public class PID {
     private PIDParameters p;
-
     private double I;
     private double D;
 
     private double v;
     private double e;
 
-    private double ad,bd, yOld;
+    private double ad,bd, yOld, y;
 
     // Constructor
     public PID(String name) {
@@ -35,11 +34,11 @@ public class PID {
     }
 
     // Calculates the control signal v. Called from BeamAndBallRegul.
-    public synchronized double calculateOutput(double yball, double yref){
-        this.e = yref - yball;
-        this.D = this.ad * this.D - this.bd * (yball - this.yOld);
-        this.v = p.K * (p.Beta * yref - yball) + I + D;
-        this.yOld = yball;
+    public synchronized double calculateOutput(double yref, double yball){
+    	y = yball;
+        this.e = yref - y;
+        this.D = this.ad * this.D - this.bd * (y - this.yOld);
+        this.v = p.K * (p.Beta * yref - y) + I + D;
         return this.v;
     }
 
@@ -51,6 +50,7 @@ public class PID {
         } else {
           I = 0.0;
         }
+        this.yOld = y;
     }
 
     // Returns the sampling interval expressed as a long.
